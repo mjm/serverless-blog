@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "es6",
+    "lib": [
+      "esnext"
+    ],
+    "moduleResolution": "node",
+    "outDir": ".build"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

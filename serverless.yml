@@ -1,0 +1,73 @@
+service:
+  name: serverless-blog
+
+plugins:
+  - serverless-webpack
+
+custom:
+  webpack:
+    includeModules:
+      forceExclude:
+        - aws-sdk
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'prod'}
+  runtime: nodejs8.10
+  apiName: serverless-blog
+  memorySize: 256
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - dynamodb:DescribeTable
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      - dynamodb:UpdateItem
+      - dynamodb:DeleteItem
+    Resource: "arn:aws:dynamodb:us-east-1:*:*"
+  - Effect: Allow
+    Action:
+      - s3:Put*
+      - s3:Get*
+    Resource: "arn:aws:s3:::*"
+  environment:
+    DYNAMODB_TABLE: serverless-blog-${self:provider.stage}
+
+package:
+  individually: true
+
+functions:
+  create-post:
+    handler: src/functions/createPost.handle
+    events:
+      - http:
+          method: post
+          path: posts
+  generate-site:
+    handler: src/functions/generateSite.handle
+    events:
+      - http:
+          method: post
+          path: generate
+
+resources:
+  Resources:
+    blogTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: serverless-blog-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: blogId
+            AttributeType: S
+          - AttributeName: path
+            AttributeType: S
+        KeySchema:
+          - AttributeName: blogId
+            KeyType: HASH
+          - AttributeName: path
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
