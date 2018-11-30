@@ -1,5 +1,6 @@
 import * as S3 from "aws-sdk/clients/s3";
 import * as nunjucks from "nunjucks";
+import * as marked from "marked";
 
 import * as site from "./model/site";
 import * as post from "./model/post";
@@ -8,6 +9,9 @@ const s3 = new S3();
 
 const templateEnv = new nunjucks.Environment(null, { autoescape: true });
 templateEnv.addFilter('permalink', generatePermalink);
+templateEnv.addFilter('markdown', function(str: string) {
+  return new nunjucks.runtime.SafeString(marked(str));
+});
 
 const indexTemplate = `
 <!DOCTYPE html>
@@ -26,7 +30,7 @@ const indexTemplate = `
   {% for post in posts %}
     <article>
       <h2>{{ post.title }}</h2>
-      <p>{{ post.content }}</p>
+      {{ post.content | markdown }}
       <a href="{{ post | permalink }}">View Post</a>
     </article>
   {% else %}
@@ -54,7 +58,7 @@ const postTemplate = `
     {% if post.title %}
       <h2>{{ post.title }}</h2>
     {% endif %}
-    <p>{{ post.content }}</p>
+    {{ post.content | markdown }}
   </article>
 </body>
 </html>

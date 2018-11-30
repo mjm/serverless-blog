@@ -7,10 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "marked": "^0.5.2",
     "nunjucks": "^3.1.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.1",
+    "@types/marked": "^0.4.2",
     "@types/node": "^8.0.57",
     "@types/nunjucks": "^3.1.0",
     "aws-sdk": "^2.366.0",
