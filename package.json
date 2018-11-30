@@ -8,12 +8,14 @@
   },
   "dependencies": {
     "marked": "^0.5.2",
+    "node-fetch": "^2.3.0",
     "nunjucks": "^3.1.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.1",
     "@types/marked": "^0.4.2",
     "@types/node": "^8.0.57",
+    "@types/node-fetch": "^2.1.4",
     "@types/nunjucks": "^3.1.0",
     "aws-sdk": "^2.366.0",
     "serverless-webpack": "^5.1.1",

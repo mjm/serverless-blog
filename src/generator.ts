@@ -4,14 +4,24 @@ import * as marked from "marked";
 
 import * as site from "./model/site";
 import * as post from "./model/post";
+import embedTweets from "./embedTweets";
 
 const s3 = new S3();
 
 const templateEnv = new nunjucks.Environment(null, { autoescape: true });
 templateEnv.addFilter('permalink', generatePermalink);
-templateEnv.addFilter('markdown', function(str: string) {
-  return new nunjucks.runtime.SafeString(marked(str));
-});
+
+// async filter for rendering content
+templateEnv.addFilter('markdown', (str, callback) => {
+  renderMarkdown(str)
+    .then(rendered => callback(null, rendered))
+    .catch(err => callback(err));
+}, true);
+
+async function renderMarkdown(str: string): Promise<nunjucks.runtime.SafeString> {
+  const transformed = await embedTweets(str);
+  return new nunjucks.runtime.SafeString(marked(transformed));
+}
 
 const indexTemplate = `
 <!DOCTYPE html>
@@ -68,7 +78,7 @@ export default async function generate(blogId: string): Promise<void> {
   const siteConfig = await site.getConfig(blogId);
   const posts = await post.recent(blogId);
 
-  const body = templateEnv.renderString(indexTemplate, {
+  const body = await render(indexTemplate, {
     site: siteConfig,
     posts
   });
@@ -81,7 +91,7 @@ export default async function generate(blogId: string): Promise<void> {
 }
 
 async function generatePost(siteConfig: site.Config, p: post.Post): Promise<void> {
-  const body = templateEnv.renderString(postTemplate, {
+  const body = await render(postTemplate, {
     site: siteConfig,
     post: p
   });
@@ -91,6 +101,18 @@ async function generatePost(siteConfig: site.Config, p: post.Post): Promise<void
 
   console.log(`publishing ${p.path} to ${pagePath}`);
   await publish(siteConfig, pagePath, body);
+}
+
+async function render(template: string, context: any): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    templateEnv.renderString(template, context, (err, rendered) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rendered);
+      }
+    });
+  });
 }
 
 async function publish(siteConfig: site.Config, path: string, body: string): Promise<void> {
