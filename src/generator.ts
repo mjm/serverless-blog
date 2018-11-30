@@ -14,6 +14,8 @@ const indexTemplate = `
 <html>
 <head>
   <title>{{ site.title }}</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed" rel="stylesheet">
+  <link href="/site.css" rel="stylesheet">
 </head>
 <body>
   <header>
@@ -39,6 +41,8 @@ const postTemplate = `
 <html>
 <head>
   <title>{{ site.title }}</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed" rel="stylesheet">
+  <link href="/site.css" rel="stylesheet">
 </head>
 <body>
   <header>
