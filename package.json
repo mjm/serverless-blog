@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/aws-lambda": "8.10.1",
     "@types/node": "^8.0.57",
+    "@types/nunjucks": "^3.1.0",
     "aws-sdk": "^2.366.0",
     "serverless-webpack": "^5.1.1",
     "source-map-support": "^0.5.6",

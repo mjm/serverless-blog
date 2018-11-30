@@ -69,5 +69,5 @@ resources:
           - AttributeName: path
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
+          ReadCapacityUnits: 5
           WriteCapacityUnits: 1

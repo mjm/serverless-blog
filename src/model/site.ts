@@ -1,6 +1,6 @@
 import { db, tableName } from "./db";
 
-interface Config {
+export interface Config {
   blogId: string;
   path: "config";
   title: string;
