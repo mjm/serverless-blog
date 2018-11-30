@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 
-import generate from "../generator";
+import generate from "../generate";
 
 export const handle: APIGatewayProxyHandler = async (event, context) => {
   const { blogId } = JSON.parse(event.body);
