@@ -7,6 +7,7 @@ export interface Post {
   path?: string;
   title?: string;
   content: string;
+  renderedContent?: string;
 }
 
 export async function recent(blogId: string): Promise<Post[]> {

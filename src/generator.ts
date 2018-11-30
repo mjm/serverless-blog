@@ -40,7 +40,7 @@ const indexTemplate = `
   {% for post in posts %}
     <article>
       <h2>{{ post.title }}</h2>
-      {{ post.content | markdown }}
+      {{ post.renderedContent | safe }}
       <a href="{{ post | permalink }}">View Post</a>
     </article>
   {% else %}
@@ -68,7 +68,7 @@ const postTemplate = `
     {% if post.title %}
       <h2>{{ post.title }}</h2>
     {% endif %}
-    {{ post.content | markdown }}
+    {{ post.renderedContent | safe }}
   </article>
 </body>
 </html>
@@ -77,6 +77,9 @@ const postTemplate = `
 export default async function generate(blogId: string): Promise<void> {
   const siteConfig = await site.getConfig(blogId);
   const posts = await post.recent(blogId);
+
+  // render the content of all posts before rendering templates
+  await Promise.all(posts.map(p => renderPostContent(p)));
 
   const body = await render(indexTemplate, {
     site: siteConfig,
@@ -88,6 +91,11 @@ export default async function generate(blogId: string): Promise<void> {
 
   const publishPosts = posts.map(p => generatePost(siteConfig, p));
   await Promise.all(publishPosts);
+}
+
+async function renderPostContent(p: post.Post): Promise<void> {
+  const embedded = await embedTweets(p.content);
+  p.renderedContent = marked(embedded);
 }
 
 async function generatePost(siteConfig: site.Config, p: post.Post): Promise<void> {
