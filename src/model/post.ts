@@ -13,6 +13,7 @@ export interface Post {
   status?: PostStatus;
 
   renderedContent?: string;
+  permalink?: string;
 }
 
 export async function recent(blogId: string): Promise<Post[]> {

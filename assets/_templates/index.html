@@ -4,6 +4,8 @@
   <title>{{ site.title }}</title>
   <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Condensed" rel="stylesheet">
   <link href="/site.css" rel="stylesheet">
+  <link href="/feed.json" rel="alternate" type="application/json" title="JSON Feed">
+  <link href="/feed.atom" rel="alternate" type="application/atom" title="Atom Feed">
 </head>
 <body>
   <header>
@@ -15,7 +17,7 @@
     <article>
       <h2>{{ post.title }}</h2>
       {{ post.renderedContent | safe }}
-      <a href="{{ post | permalink }}">View Post</a>
+      <a href="{{ post.permalink }}">View Post</a>
     </article>
   {% else %}
     <hr>

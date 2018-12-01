@@ -1,11 +1,13 @@
 import * as S3 from "aws-sdk/clients/s3";
 import * as nunjucks from "nunjucks";
 import * as marked from "marked";
+import * as mime from "mime-types";
 
 import * as site from "../model/site";
 import * as post from "../model/post";
 import embedTweets from "./embedTweets";
 import { AWSLoader } from "./awsLoader";
+import { generateFeed } from "./feed";
 
 const s3 = new S3();
 
@@ -13,18 +15,16 @@ export default async function generate(blogId: string): Promise<void> {
   const siteConfig = await site.getConfig(blogId);
   const posts = await post.recent(blogId);
 
+  const r = createRenderer(siteConfig);
+
   // render the content of all posts before rendering templates
   await Promise.all(posts.map(p => renderPostContent(p)));
 
-  const r = createRenderer(siteConfig);
-
-  const body = await r('index.html', {
-    site: siteConfig,
-    posts
-  });
-
-  console.log('publishing index.html');
-  await publish(siteConfig, 'index.html', body);
+  let jobs = [
+    generateIndex(r, siteConfig, posts),
+    generateFeeds(siteConfig, posts),
+    generatePosts(r, siteConfig, posts)
+  ];
 
   const publishPosts = posts.map(p => generatePost(r, siteConfig, p));
   await Promise.all(publishPosts);
@@ -53,6 +53,32 @@ function createRenderer(siteConfig: site.Config): Renderer {
 async function renderPostContent(p: post.Post): Promise<void> {
   const embedded = await embedTweets(p.content);
   p.renderedContent = marked(embedded);
+
+  p.permalink = generatePermalink(p);
+}
+
+async function generateIndex(r: Renderer, siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+  const body = await r('index.html', {
+    site: siteConfig,
+    posts
+  });
+
+  console.log('publishing index.html');
+  await publish(siteConfig, 'index.html', body);
+}
+
+async function generateFeeds(siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+  const feed = generateFeed(siteConfig, posts);
+
+  await Promise.all([
+    publish(siteConfig, 'feed.json', feed.json1()),
+    publish(siteConfig, 'feed.atom', feed.atom1()),
+    publish(siteConfig, 'feed.rss', feed.rss2())
+  ]);
+}
+
+async function generatePosts(r: Renderer, siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+  await Promise.all(posts.map(p => generatePost(r, siteConfig, p)));
 }
 
 async function generatePost(r: Renderer, siteConfig: site.Config, p: post.Post): Promise<void> {
@@ -73,7 +99,7 @@ async function publish(siteConfig: site.Config, path: string, body: string): Pro
     Bucket: siteConfig.blogId, // TODO use a key in the config for this
     Key: path,
     Body: body,
-    ContentType: 'text/html',
+    ContentType: mime.contentType(path),
     ACL: 'public-read'
   }).promise();
 }
