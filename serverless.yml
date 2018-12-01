@@ -51,6 +51,12 @@ functions:
       - http:
           method: post
           path: generate
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - blogTable
+              - StreamArn
   micropub-get:
     handler: src/functions/micropub.get
     events:
@@ -94,3 +100,5 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: KEYS_ONLY
