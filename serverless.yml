@@ -33,7 +33,7 @@ provider:
       - s3:Get*
     Resource: "arn:aws:s3:::*"
   environment:
-    DYNAMODB_TABLE: serverless-blog-${self:provider.stage}
+    DYNAMODB_TABLE: sls-blog-${self:provider.stage}
 
 package:
   individually: true
@@ -57,11 +57,13 @@ resources:
     blogTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: serverless-blog-${self:provider.stage}
+        TableName: sls-blog-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: blogId
             AttributeType: S
           - AttributeName: path
+            AttributeType: S
+          - AttributeName: publishedAt
             AttributeType: S
         KeySchema:
           - AttributeName: blogId
@@ -71,3 +73,12 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 1
+        LocalSecondaryIndexes:
+          - IndexName: published-posts
+            KeySchema:
+              - AttributeName: blogId
+                KeyType: HASH
+              - AttributeName: publishedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
