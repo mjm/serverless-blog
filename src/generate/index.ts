@@ -1,3 +1,5 @@
+import * as path from "path";
+
 import * as S3 from "aws-sdk/clients/s3";
 import * as nunjucks from "nunjucks";
 import * as marked from "marked";
@@ -93,12 +95,12 @@ async function generatePost(r: Renderer, siteConfig: site.Config, p: post.Post):
   await publish(siteConfig, pagePath, body);
 }
 
-async function publish(siteConfig: site.Config, path: string, body: string): Promise<void> {
+async function publish(siteConfig: site.Config, filePath: string, body: string): Promise<void> {
   await s3.putObject({
     Bucket: siteConfig.blogId, // TODO use a key in the config for this
-    Key: path,
+    Key: filePath,
     Body: body,
-    ContentType: mime.contentType(path),
+    ContentType: mime.contentType(path.basename(filePath)),
     ACL: 'public-read'
   }).promise();
 }
