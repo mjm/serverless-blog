@@ -36,7 +36,6 @@ type Renderer = (name: string, context: any) => Promise<string>;
 function createRenderer(siteConfig: site.Config): Renderer {
   const loader = new AWSLoader({ bucket: siteConfig.blogId });
   const env = new nunjucks.Environment(loader, { autoescape: true });
-  env.addFilter('permalink', generatePermalink);
 
   return async function renderer(name: string, context: any): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -54,8 +53,7 @@ function createRenderer(siteConfig: site.Config): Renderer {
 async function renderPostContent(p: post.Post): Promise<void> {
   const embedded = await embedTweets(p.content);
   p.renderedContent = marked(embedded);
-
-  p.permalink = generatePermalink(p);
+  p.permalink = post.permalink(p);
 }
 
 async function generateIndex(r: Renderer, siteConfig: site.Config, posts: post.Post[]): Promise<void> {
@@ -89,7 +87,7 @@ async function generatePost(r: Renderer, siteConfig: site.Config, p: post.Post):
   });
 
   // transform /foo/bar/ to foo/bar/index.html
-  const pagePath = `${generatePermalink(p).substring(1)}index.html`;
+  const pagePath = `${post.permalink(p).substring(1)}index.html`;
 
   console.log(`publishing ${p.path} to ${pagePath}`);
   await publish(siteConfig, pagePath, body);
@@ -103,8 +101,4 @@ async function publish(siteConfig: site.Config, filePath: string, body: string):
     ContentType: mime.contentType(path.basename(filePath)),
     ACL: 'public-read'
   }).promise();
-}
-
-function generatePermalink(p: post.Post): string {
-  return '/' + p.path.replace(/^posts\//, '') + '/';
 }
