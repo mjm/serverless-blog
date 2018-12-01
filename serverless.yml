@@ -51,6 +51,12 @@ functions:
       - http:
           method: post
           path: generate
+  micropub-get:
+    handler: src/functions/micropub.get
+    events:
+      - http:
+          method: get
+          path: micropub
 
 resources:
   Resources:
