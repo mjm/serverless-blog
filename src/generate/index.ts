@@ -26,8 +26,7 @@ export default async function generate(blogId: string): Promise<void> {
     generatePosts(r, siteConfig, posts)
   ];
 
-  const publishPosts = posts.map(p => generatePost(r, siteConfig, p));
-  await Promise.all(publishPosts);
+  await Promise.all(jobs);
 }
 
 type Renderer = (name: string, context: any) => Promise<string>;
