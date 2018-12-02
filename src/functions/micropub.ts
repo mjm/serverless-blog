@@ -11,6 +11,11 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
       statusCode: 200,
       body: JSON.stringify(config(event))
     };
+  } else if (q === "debug") {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(event)
+    };
   } else {
     return {
       statusCode: 400,
@@ -45,7 +50,7 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
     const p = await mp.create(blogId, input);
     const loc = `https://${blogId}${permalink(p)}`;
     return {
-      statusCode: 204,
+      statusCode: 201,
       headers: {
         Location: loc
       },
