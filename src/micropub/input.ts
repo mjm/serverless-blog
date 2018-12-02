@@ -6,7 +6,7 @@ export type MicropubInput = MicropubCreateInput | MicropubUpdateInput | Micropub
 export interface MicropubCreateInput {
   action: "create";
 
-  h: string;
+  type: string;
   name?: string;
   content?: string;
   published?: string;
@@ -21,18 +21,24 @@ export interface MicropubDeleteInput {
 }
 
 export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
-  const contentType = event.headers['Content-Type'];
+  const contentType = event.headers['content-type'] || '';
 
   if (contentType.startsWith('application/x-www-form-urlencoded')) {
-    const parsedQs = querystring.parse(event.body) as any;
+    let parsedQs = querystring.parse(event.body) as any;
+    const type = parsedQs.h;
+    delete parsedQs.h;
+
     // url encoded requests are always creates
-    return {...parsedQs, action: "create"};
+    return {...parsedQs, type, action: "create"};
   } else if (contentType.startsWith('application/json')) {
     const parsedJson = JSON.parse(event.body);
-    if ('h' in parsedJson) {
+    console.log('Got JSON for Micropub:', parsedJson);
+    if ('type' in parsedJson) {
+      console.log('Found type key in JSON, treating as a create');
+      const type = parsedJson.type[0].replace(/^h-/, '');
       let input: MicropubCreateInput = {
         action: "create",
-        h: parsedJson.h
+        type
       };
 
       const props = parsedJson.properties;

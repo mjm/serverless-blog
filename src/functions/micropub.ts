@@ -2,8 +2,10 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent } from "aws-lambda";
 
 import * as mp from "../micropub";
 import { permalink } from "../model/post";
+import * as headers from "../util/headers";
 
 export const get: APIGatewayProxyHandler = async (event, context) => {
+  headers.normalize(event.headers);
   const q = event.queryStringParameters.q;
 
   if (q === "config") {
