@@ -8,6 +8,7 @@ import { parse } from "date-fns";
 
 import * as site from "../model/site";
 import * as post from "../model/post";
+import * as page from "../model/page";
 import embedTweets from "./embedTweets";
 import { AWSLoader } from "./awsLoader";
 import { generateFeed } from "./feed";
@@ -18,16 +19,19 @@ const s3 = new S3();
 export default async function generate(blogId: string): Promise<void> {
   const siteConfig = await site.getConfig(blogId);
   const posts = await post.recent(blogId);
+  const pages = await page.all(blogId);
 
   const r = createRenderer(siteConfig);
 
   // render the content of all posts before rendering templates
   const decoratedPosts = await Promise.all(posts.map(p => renderPostContent(p)));
+  const decoratedPages = pages.map(p => renderPageContent(p));
 
   let jobs = [
     generateIndex(r, siteConfig, decoratedPosts),
     generateFeeds(siteConfig, decoratedPosts),
-    generatePosts(r, siteConfig, decoratedPosts)
+    generatePosts(r, siteConfig, decoratedPosts),
+    generatePages(r, siteConfig, decoratedPages)
   ];
 
   await Promise.all(jobs);
@@ -80,6 +84,24 @@ async function renderPostContent(p: post.Post): Promise<DecoratedPost> {
   return decorated;
 }
 
+interface DecoratedPage {
+  path: string;
+  name: string;
+  content: string;
+  renderedContent: nunjucks.runtime.SafeString;
+  permalink: string;
+}
+
+function renderPageContent(p: page.Page): DecoratedPage {
+  return {
+    path: p.path,
+    name: p.name,
+    content: p.content,
+    renderedContent: new nunjucks.runtime.SafeString(marked(p.content)),
+    permalink: page.permalink(p)
+  };
+}
+
 async function generateIndex(r: Renderer, siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
   const body = await r('index.html', {
     site: siteConfig,
@@ -108,6 +130,23 @@ async function generatePost(r: Renderer, siteConfig: site.Config, p: DecoratedPo
   const body = await r('post.html', {
     site: siteConfig,
     post: p
+  });
+
+  // transform /foo/bar/ to foo/bar/index.html
+  const pagePath = `${p.permalink.substring(1)}index.html`;
+
+  console.log(`publishing ${p.path} to ${pagePath}`);
+  await publish(siteConfig, pagePath, body);
+}
+
+async function generatePages(r: Renderer, siteConfig: site.Config, pages: DecoratedPage[]): Promise<void> {
+  await Promise.all(pages.map(p => generatePage(r, siteConfig, p)));
+}
+
+async function generatePage(r: Renderer, siteConfig: site.Config, p: DecoratedPage) {
+  const body = await r('page.html', {
+    site: siteConfig,
+    page: p
   });
 
   // transform /foo/bar/ to foo/bar/index.html
