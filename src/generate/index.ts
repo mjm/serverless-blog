@@ -4,13 +4,14 @@ import * as S3 from "aws-sdk/clients/s3";
 import * as nunjucks from "nunjucks";
 import * as marked from "marked";
 import * as mime from "mime-types";
-import { parse, format } from "date-fns";
+import { parse } from "date-fns";
 
 import * as site from "../model/site";
 import * as post from "../model/post";
 import embedTweets from "./embedTweets";
 import { AWSLoader } from "./awsLoader";
 import { generateFeed } from "./feed";
+import * as helpers from "./helpers";
 
 const s3 = new S3();
 
@@ -38,7 +39,9 @@ function createRenderer(siteConfig: site.Config): Renderer {
   const loader = new AWSLoader({ bucket: siteConfig.blogId });
   const env = new nunjucks.Environment(loader, { autoescape: true });
 
-  env.addFilter('dateformat', format);
+  env.addFilter('dateformat', helpers.dateformat);
+  env.addFilter('feedlinks', helpers.feedLinks);
+  env.addFilter('micropublinks', helpers.micropubLinks);
 
   return async function renderer(name: string, context: any): Promise<string> {
     return new Promise<string>((resolve, reject) => {
