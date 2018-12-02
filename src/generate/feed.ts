@@ -4,7 +4,7 @@ import * as parse from 'date-fns/parse';
 import * as site from "../model/site";
 import * as post from "../model/post";
 
-export function generateFeed(siteConfig: site.Config, posts: post.Post[]): Feed {
+export function generateFeed(siteConfig: site.Config, posts: Array<any>): Feed {
   const siteUrl = `https://${siteConfig.blogId}/`
   let feed = new Feed({
     id: siteUrl,

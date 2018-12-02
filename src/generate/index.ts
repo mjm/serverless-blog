@@ -4,6 +4,7 @@ import * as S3 from "aws-sdk/clients/s3";
 import * as nunjucks from "nunjucks";
 import * as marked from "marked";
 import * as mime from "mime-types";
+import { parse, format } from "date-fns";
 
 import * as site from "../model/site";
 import * as post from "../model/post";
@@ -20,12 +21,12 @@ export default async function generate(blogId: string): Promise<void> {
   const r = createRenderer(siteConfig);
 
   // render the content of all posts before rendering templates
-  await Promise.all(posts.map(p => renderPostContent(p)));
+  const decoratedPosts = await Promise.all(posts.map(p => renderPostContent(p)));
 
   let jobs = [
-    generateIndex(r, siteConfig, posts),
-    generateFeeds(siteConfig, posts),
-    generatePosts(r, siteConfig, posts)
+    generateIndex(r, siteConfig, decoratedPosts),
+    generateFeeds(siteConfig, decoratedPosts),
+    generatePosts(r, siteConfig, decoratedPosts)
   ];
 
   await Promise.all(jobs);
@@ -36,6 +37,8 @@ type Renderer = (name: string, context: any) => Promise<string>;
 function createRenderer(siteConfig: site.Config): Renderer {
   const loader = new AWSLoader({ bucket: siteConfig.blogId });
   const env = new nunjucks.Environment(loader, { autoescape: true });
+
+  env.addFilter('dateformat', format);
 
   return async function renderer(name: string, context: any): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -50,13 +53,31 @@ function createRenderer(siteConfig: site.Config): Renderer {
   };
 }
 
-async function renderPostContent(p: post.Post): Promise<void> {
-  const embedded = await embedTweets(p.content);
-  p.renderedContent = marked(embedded);
-  p.permalink = post.permalink(p);
+interface DecoratedPost {
+  path: string;
+  title?: string;
+  content: string;
+  renderedContent: nunjucks.runtime.SafeString;
+  publishedAt: Date;
+  permalink: string;
 }
 
-async function generateIndex(r: Renderer, siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+async function renderPostContent(p: post.Post): Promise<DecoratedPost> {
+  const embedded = await embedTweets(p.content);
+  let decorated: DecoratedPost = {
+    path: p.path,
+    content: p.content,
+    renderedContent: new nunjucks.runtime.SafeString(marked(embedded)),
+    publishedAt: parse(p.publishedAt),
+    permalink: post.permalink(p)
+  };
+  if (p.title) {
+    decorated.title = p.title;
+  }
+  return decorated;
+}
+
+async function generateIndex(r: Renderer, siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
   const body = await r('index.html', {
     site: siteConfig,
     posts
@@ -66,7 +87,7 @@ async function generateIndex(r: Renderer, siteConfig: site.Config, posts: post.P
   await publish(siteConfig, 'index.html', body);
 }
 
-async function generateFeeds(siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+async function generateFeeds(siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
   const feed = generateFeed(siteConfig, posts);
 
   await Promise.all([
@@ -76,18 +97,18 @@ async function generateFeeds(siteConfig: site.Config, posts: post.Post[]): Promi
   ]);
 }
 
-async function generatePosts(r: Renderer, siteConfig: site.Config, posts: post.Post[]): Promise<void> {
+async function generatePosts(r: Renderer, siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
   await Promise.all(posts.map(p => generatePost(r, siteConfig, p)));
 }
 
-async function generatePost(r: Renderer, siteConfig: site.Config, p: post.Post): Promise<void> {
+async function generatePost(r: Renderer, siteConfig: site.Config, p: DecoratedPost): Promise<void> {
   const body = await r('post.html', {
     site: siteConfig,
     post: p
   });
 
   // transform /foo/bar/ to foo/bar/index.html
-  const pagePath = `${post.permalink(p).substring(1)}index.html`;
+  const pagePath = `${p.permalink.substring(1)}index.html`;
 
   console.log(`publishing ${p.path} to ${pagePath}`);
   await publish(siteConfig, pagePath, body);
