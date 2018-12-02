@@ -1,4 +1,5 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent } from "aws-lambda";
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, CustomAuthorizerHandler } from "aws-lambda";
+import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import { permalink } from "../model/post";
@@ -45,6 +46,7 @@ function config(event: APIGatewayProxyEvent): MicropubConfig {
 
 
 export const post: APIGatewayProxyHandler = async (event, context) => {
+  headers.normalize(event.headers);
   const input = mp.input.fromEvent(event);
   const blogId = event.queryStringParameters.site;
   if (input.action === 'create') {
@@ -72,6 +74,38 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
     return {
       statusCode: 400,
       body: JSON.stringify({error: 'invalid_request'})
+    };
+  }
+};
+
+const tokensUrl = 'https://tokens.indieauth.com/token';
+
+export const verify: CustomAuthorizerHandler = async (event, context) => {
+  const token = event.authorizationToken;
+  const methodArn = event.methodArn;
+
+  // pass the authorization header right on through to the tokens API
+  const response = await fetch(tokensUrl, {
+    headers: {
+      Authorization: token,
+      Accept: 'application/json'
+    }
+  });
+
+  if (response.ok) {
+    const { me, scope } = await response.json();
+    const scopes = scope.split(' ') as string[];
+
+    const allowAccess = scopes.includes('create');
+
+    return {
+      principalId: me,
+      policyDocument: mp.auth.createPolicy(true, methodArn)
+    };
+  } else {
+    return {
+      principalId: 'unknown',
+      policyDocument: mp.auth.createPolicy(false, methodArn)
     };
   }
 };

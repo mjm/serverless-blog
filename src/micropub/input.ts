@@ -22,9 +22,11 @@ export interface MicropubDeleteInput {
 
 export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
   const contentType = event.headers['content-type'] || '';
+  console.log('input has content type', contentType);
 
   if (contentType.startsWith('application/x-www-form-urlencoded')) {
     let parsedQs = querystring.parse(event.body) as any;
+    console.log('Got query string input:', parsedQs);
     const type = parsedQs.h;
     delete parsedQs.h;
 

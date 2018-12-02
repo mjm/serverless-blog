@@ -69,6 +69,12 @@ functions:
       - http:
           method: post
           path: micropub
+          authorizer:
+            type: TOKEN
+            name: micropub-verify
+            identitySource: method.request.header.Authorization
+  micropub-verify:
+    handler: src/functions/micropub.verify
 
 resources:
   Resources:
