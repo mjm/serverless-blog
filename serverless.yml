@@ -3,6 +3,7 @@ service:
 
 plugins:
   - serverless-webpack
+  - serverless-apigwy-binary
 
 custom:
   webpack:
@@ -75,6 +76,17 @@ functions:
             identitySource: method.request.header.Authorization
   micropub-verify:
     handler: src/functions/micropub.verify
+  upload-media:
+    handler: src/functions/uploadMedia.handle
+    events:
+      - http:
+          method: post
+          path: micropub/media
+          contentHandling: CONVERT_TO_BINARY
+          authorizer:
+            type: TOKEN
+            name: micropub-verify
+            identitySource: method.request.header.Authorization
 
 resources:
   Resources:
