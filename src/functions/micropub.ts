@@ -2,6 +2,7 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent, CustomAuthorizerHandler }
 import fetch from "node-fetch";
 
 import * as mp from "../micropub";
+import Post from "../model/post";
 import * as headers from "../util/headers";
 
 export const get: APIGatewayProxyHandler = async (event, context) => {
@@ -20,6 +21,13 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
     return {
       statusCode: 200,
       body: JSON.stringify(event)
+    };
+  } else if (q === "source") {
+    const url = event.queryStringParameters.url;
+    const result = await source(url);
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result)
     };
   } else {
     return {
@@ -44,6 +52,29 @@ function config(event: APIGatewayProxyEvent): MicropubConfig {
   };
 }
 
+interface MicropubSource {
+  type: string[];
+  properties: {[key: string]: any[]};
+}
+
+async function source(url: string): Promise<MicropubSource> {
+  const post = await Post.getByURL(url);
+  let result = {
+    type: [ `h-${post.type}` ],
+    properties: {}
+  };
+
+  for (let key of post.properties) {
+    const val = post.get(key);
+    if (val.constructor === Array) {
+      result.properties[key] = val;
+    } else {
+      result.properties[key] = [val];
+    }
+  }
+
+  return result;
+}
 
 export const post: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);

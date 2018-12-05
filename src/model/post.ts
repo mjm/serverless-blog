@@ -1,3 +1,4 @@
+import { URL } from "url";
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
 import { format, parse } from "date-fns";
@@ -40,6 +41,16 @@ export default class Post {
 
   get published(): Date { return this.getDate('published'); }
   get updated(): Date { return this.getDate('updated'); }
+
+  get properties(): string[] {
+    return Object.keys(this.data).filter(k => {
+      return k !== 'type' && k !== 'blogId' && k !== 'path';
+    });
+  }
+
+  get(key: string): any {
+    return this.data[key];
+  }
 
   get permalink(): string {
     return '/' + this.path.replace(/^posts\//, '') + '/';
@@ -99,6 +110,37 @@ export default class Post {
     }).promise();
 
     return new Post(data);
+  }
+
+  static async get(blogId: string, path: string): Promise<Post> {
+    if (!path.startsWith('posts/')) {
+      path = `posts/${path}`;
+    }
+
+    const query = {
+      TableName: tableName,
+      Key: {
+        blogId: blogId,
+        path: path
+      }
+    };
+
+    const result = await db.get(query).promise();
+    return new Post(result.Item as PostData);
+  }
+
+  static async getByURL(url: string): Promise<Post> {
+    const u = new URL(url);
+    const blogId = u.hostname;
+    let path = u.pathname;
+    if (path.endsWith('/')) {
+      path = path.slice(0, -1);
+    }
+    if (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+
+    return await this.get(blogId, path);
   }
 }
 
