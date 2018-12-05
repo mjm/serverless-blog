@@ -1,6 +1,7 @@
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
 import { format, parse } from "date-fns";
+import * as rs from "randomstring";
 
 import { db, tableName } from "./db";
 
@@ -106,7 +107,13 @@ function generatePath(data: PostData): string {
   if (data.name) {
     s = makeSlug(data.name);
   } else {
-    const content = (typeof data.content === 'string') ? data.content : data.content.html;
+    let content: string;
+    if (data.content) {
+      content = (typeof data.content === 'string') ? data.content : data.content.html;
+    } else {
+      content = rs.generate(10);
+    }
+
     s = makeSlug(content);
     if (s.length > 40) {
       s = s.substring(0, 40);

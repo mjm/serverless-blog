@@ -62,12 +62,14 @@ function createRenderer(siteConfig: site.Config): Renderer {
 }
 
 async function renderPostContent(p: Post): Promise<DecoratedPost> {
-  let rendered: string;
-  if (typeof p.content === 'string') {
-    const embedded = await embedTweets(p.content);
-    rendered = marked(embedded);
-  } else {
-    rendered = p.content.html;
+  let rendered = '';
+  if (p.content) {
+    if (typeof p.content === 'string') {
+      const embedded = await embedTweets(p.content);
+      rendered = marked(embedded);
+    } else {
+      rendered = p.content.html;
+    }
   }
 
   let decorated: DecoratedPost = {
