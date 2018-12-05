@@ -15,7 +15,7 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
   if (q === "config") {
     return {
       statusCode: 200,
-      body: JSON.stringify(config(event))
+      body: JSON.stringify(mp.config(event))
     };
   } else if (q === "debug") {
     return {
@@ -24,7 +24,7 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
     };
   } else if (q === "source") {
     const url = event.queryStringParameters.url;
-    const result = await source(url);
+    const result = await mp.source(url);
     return {
       statusCode: 200,
       body: JSON.stringify(result)
@@ -39,42 +39,6 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
     };
   }
 };
-
-interface MicropubConfig {
-  "media-endpoint": string;
-}
-
-function config(event: APIGatewayProxyEvent): MicropubConfig {
-  const url = 'https://blog-api.mattmoriarity.com/micropub/media';
-
-  return {
-    "media-endpoint": url
-  };
-}
-
-interface MicropubSource {
-  type: string[];
-  properties: {[key: string]: any[]};
-}
-
-async function source(url: string): Promise<MicropubSource> {
-  const post = await Post.getByURL(url);
-  let result = {
-    type: [ `h-${post.type}` ],
-    properties: {}
-  };
-
-  for (let key of post.properties) {
-    const val = post.get(key);
-    if (val.constructor === Array) {
-      result.properties[key] = val;
-    } else {
-      result.properties[key] = [val];
-    }
-  }
-
-  return result;
-}
 
 export const post: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
