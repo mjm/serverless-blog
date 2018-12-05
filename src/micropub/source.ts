@@ -5,7 +5,7 @@ interface MicropubSource {
   properties: {[key: string]: any[]};
 }
 
-async function source(url: string): Promise<MicropubSource> {
+export default async function source(url: string): Promise<MicropubSource> {
   const post = await Post.getByURL(url);
   let result = {
     type: [ `h-${post.type}` ],

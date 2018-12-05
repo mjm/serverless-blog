@@ -58,9 +58,11 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
       body: ""
     };
   } else if (input.action === 'update') {
+    console.log('updating post from micropub input:', input);
+    await mp.update(blogId, input);
     return {
-      statusCode: 200,
-      body: "Cool update bro!"
+      statusCode: 204,
+      body: ""
     };
   } else if (input.action === 'delete') {
     return {

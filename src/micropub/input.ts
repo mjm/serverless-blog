@@ -14,12 +14,21 @@ export interface MicropubCreateInput {
   [propName: string]: any;
 }
 
+export type PropertyMap = {[key: string]: any[]};
+
 export interface MicropubUpdateInput {
   action: "update";
+
+  url: string;
+  replace?: PropertyMap;
+  add?: PropertyMap;
+  delete?: string[] | PropertyMap;
 }
 
 export interface MicropubDeleteInput {
   action: "delete";
+
+  url: string;
 }
 
 export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {

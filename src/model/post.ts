@@ -27,6 +27,13 @@ export interface PostData {
   [propName: string]: any;
 }
 
+const singularKeys = [
+  'name',
+  'content',
+  'published',
+  'updated'
+]
+
 export default class Post {
   private data: PostData;
 
@@ -34,6 +41,7 @@ export default class Post {
     this.data = data;
   }
 
+  get blogId(): string { return this.data.blogId; }
   get path(): string { return this.data.path; }
   get type(): string { return this.data.type; }
   get name(): string { return this.data.name; }
@@ -50,6 +58,16 @@ export default class Post {
 
   get(key: string): any {
     return this.data[key];
+  }
+
+  set(key: string, value: any) {
+    if (value === null || value === undefined) {
+      delete this.data[key];
+    } else if (singularKeys.includes(key) && value.constructor === Array) {
+      this.data[key] = value[0];
+    } else {
+      this.data[key] = value;
+    }
   }
 
   get permalink(): string {
@@ -102,14 +120,10 @@ export default class Post {
     // Don't persist the post status, it is represented by publishedAt
     delete data.status;
 
-    console.log('creating post:', data);
+    const post = new Post(data);
+    await post.save();
 
-    await db.put({
-      TableName: tableName,
-      Item: data
-    }).promise();
-
-    return new Post(data);
+    return post;
   }
 
   static async get(blogId: string, path: string): Promise<Post> {
@@ -141,6 +155,14 @@ export default class Post {
     }
 
     return await this.get(blogId, path);
+  }
+
+  async save(): Promise<void> {
+    console.log('saving post:', this.data);
+    await db.put({
+      TableName: tableName,
+      Item: this.data
+    }).promise();
   }
 }
 
