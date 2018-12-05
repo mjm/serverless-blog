@@ -3,3 +3,4 @@ import * as auth from "./auth";
 
 export { input, auth };
 export { default as create } from "./create";
+export { default as identify } from "./identify";

@@ -2,11 +2,13 @@ import { APIGatewayProxyHandler, APIGatewayProxyEvent, CustomAuthorizerHandler }
 import fetch from "node-fetch";
 
 import * as mp from "../micropub";
-import { permalink } from "../model/post";
 import * as headers from "../util/headers";
 
 export const get: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
+  const blogId = mp.identify(event.requestContext.authorizer.principalId);
+  console.log('got micropub request for', blogId);
+
   const q = event.queryStringParameters.q;
 
   if (q === "config") {
@@ -35,9 +37,7 @@ interface MicropubConfig {
 }
 
 function config(event: APIGatewayProxyEvent): MicropubConfig {
-  // We need some properties that the type definition doesn't include
-  const context = event.requestContext as any;
-  const url = `https://${context.domainName}${context.path}/media`;
+  const url = 'https://blog-api.mattmoriarity.com/micropub/media';
 
   return {
     "media-endpoint": url
@@ -48,11 +48,13 @@ function config(event: APIGatewayProxyEvent): MicropubConfig {
 export const post: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
   const input = mp.input.fromEvent(event);
-  const blogId = event.queryStringParameters.site;
+  const blogId = mp.identify(event.requestContext.authorizer.principalId);
+  console.log('got micropub request for', blogId);
+
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
     const p = await mp.create(blogId, input);
-    const loc = `https://${blogId}${permalink(p)}`;
+    const loc = `https://${blogId}${p.permalink}`;
     return {
       statusCode: 201,
       headers: {
@@ -97,12 +99,14 @@ export const verify: CustomAuthorizerHandler = async (event, context) => {
     const scopes = scope.split(' ') as string[];
 
     const allowAccess = scopes.includes('create');
+    console.log('allowing access for', me, 'in scopes', scopes);
 
     return {
       principalId: me,
       policyDocument: mp.auth.createPolicy(true, methodArn)
     };
   } else {
+    console.log('could not verify token', response);
     return {
       principalId: 'unknown',
       policyDocument: mp.auth.createPolicy(false, methodArn)

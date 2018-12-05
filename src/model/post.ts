@@ -1,85 +1,123 @@
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
-
-import * as format from "date-fns/format";
+import { format, parse } from "date-fns";
 
 import { db, tableName } from "./db";
 
 type PostStatus = "draft" | "published";
 
-export interface Post {
+interface PostHTMLContent {
+  html: string;
+}
+
+type PostContent = string | PostHTMLContent;
+
+export interface PostData {
   blogId: string;
   path?: string;
-  title?: string;
-  content: string;
-  publishedAt?: string;
+  type: string;
+  name?: string;
+  content: PostContent;
+  published?: string;
+  updated?: string;
   status?: PostStatus;
 
-  renderedContent?: string;
-  permalink?: string;
+  [propName: string]: any;
 }
 
-export async function recent(blogId: string): Promise<Post[]> {
-  const query = {
-    TableName: tableName,
-    IndexName: 'published-posts',
-    KeyConditionExpression: "blogId = :b",
-    ExpressionAttributeValues: {
-      ":b": blogId
-    },
-    Limit: 15,
-    ScanIndexForward: false,
-    ReturnConsumedCapacity: "TOTAL"
-  };
+export default class Post {
+  private data: PostData;
 
-  const result = await db.query(query).promise();
+  constructor(data: PostData) {
+    this.data = data;
+  }
 
-  console.log(`recent blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
+  get path(): string { return this.data.path; }
+  get type(): string { return this.data.type; }
+  get name(): string { return this.data.name; }
+  get content(): PostContent { return this.data.content; }
 
-  return result.Items as Post[];
+  get published(): Date { return this.getDate('published'); }
+  get updated(): Date { return this.getDate('updated'); }
+
+  get permalink(): string {
+    return '/' + this.path.replace(/^posts\//, '') + '/';
+  }
+
+  getDate(prop: string): Date {
+    if (prop in this.data) {
+      return parse(this.data[prop]);
+    } else {
+      return null;
+    }
+  }
+
+  static async recent(blogId: string): Promise<Post[]> {
+    const query = {
+      TableName: tableName,
+      IndexName: 'published-posts',
+      KeyConditionExpression: "blogId = :b",
+      ExpressionAttributeValues: {
+        ":b": blogId
+      },
+      Limit: 15,
+      ScanIndexForward: false,
+      ReturnConsumedCapacity: "TOTAL"
+    };
+
+    const result = await db.query(query).promise();
+
+    console.log(`recent blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
+
+    return result.Items.map((i: PostData) => new Post(i));
+  }
+
+  static async create(data: PostData): Promise<Post> {
+    if (data.status === "published" && !data.published) {
+      data.published = new Date().toISOString();
+    }
+
+    if (data.name == "") {
+      delete data.name;
+    }
+
+    if (!data.path) {
+      data.path = generatePath(data);
+    } else if (!data.path.startsWith('posts/')) {
+      data.path = `posts/${data.path}`;
+    }
+
+    // Don't persist the post status, it is represented by publishedAt
+    delete data.status;
+
+    console.log('creating post:', data);
+
+    await db.put({
+      TableName: tableName,
+      Item: data
+    }).promise();
+
+    return new Post(data);
+  }
 }
 
-export async function create(data: Post): Promise<Post> {
-  if (data.status === "published" && !data.publishedAt) {
-    data.publishedAt = new Date().toISOString();
-  }
-
-  if (data.title == "") {
-    delete data.title;
-  }
-
-  if (!data.path) {
-    data.path = generatePath(data);
-  } else if (!data.path.startsWith('posts/')) {
-    data.path = `posts/${data.path}`;
-  }
-
-  // Don't persist the post status, it is represented by publishedAt
-  delete data.status;
-
-  console.log('creating post:', data);
-
-  await db.put({
-    TableName: tableName,
-    Item: data
-  }).promise();
-
-  return data;
-}
-
-function generatePath(data: Post): string {
+function generatePath(data: PostData): string {
   let s: string;
-  if (data.title) {
-    s = makeSlug(data.title);
+  if (data.name) {
+    s = makeSlug(data.name);
   } else {
-    s = makeSlug(data.content);
-    if (s.length > 50) {
+    const content = (typeof data.content === 'string') ? data.content : data.content.html;
+    s = makeSlug(content);
+    if (s.length > 40) {
+      s = s.substring(0, 40);
+
       const i = s.lastIndexOf('-');
       s = s.substring(0, i);
     }
   }
 
-  const dateStr = format(data.publishedAt || new Date(), 'YYYY-MM-DD');
+  const published: Date = data.published ? parse(data.published) : new Date();
+  const dateStr = format(published, 'YYYY-MM-DD');
 
   return `posts/${dateStr}-${s}`;
 }
@@ -88,8 +126,4 @@ function makeSlug(str: string): string {
   return slug(str, {
     lower: true
   });
-}
-
-export function permalink(p: Post): string {
-  return '/' + p.path.replace(/^posts\//, '') + '/';
 }

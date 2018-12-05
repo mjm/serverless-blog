@@ -10,6 +10,8 @@ export interface MicropubCreateInput {
   name?: string;
   content?: string;
   published?: string;
+
+  [propName: string]: any;
 }
 
 export interface MicropubUpdateInput {
@@ -40,19 +42,17 @@ export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
       const type = parsedJson.type[0].replace(/^h-/, '');
       let input: MicropubCreateInput = {
         action: "create",
+        ...parsedJson.properties,
         type
       };
 
-      const props = parsedJson.properties;
-      if (props.name) {
-        input.name = props.name[0];
-      }
-      if (props.content) {
-        input.content = props.content[0];
-      }
-      if (props.published) {
-        input.published = props.published[0];
-      }
+      // we only expect a single value for these keys
+      singularize(input, [
+        'name',
+        'content',
+        'published'
+      ]);
+
       return input;
     } else if (parsedJson.action === 'update') {
       // TODO
@@ -66,3 +66,10 @@ export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
   return null;
 }
 
+function singularize(input: MicropubCreateInput, keys: string[]) {
+  for (let key of keys) {
+    if (key in input) {
+      input[key] = input[key][0];
+    }
+  }
+}

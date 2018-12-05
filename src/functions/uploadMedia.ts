@@ -4,13 +4,15 @@ import Busboy from "busboy";
 import uuid from "uuid/v4";
 
 import * as headers from "../util/headers";
+import * as mp from "../micropub";
 
 const s3 = new S3();
 
 export const handle: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
+  const blogId = mp.identify(event.requestContext.authorizer.principalId);
+  console.log('got micropub request for', blogId);
 
-  const blogId = event.queryStringParameters.site;
   const uploadedFile = await upload(blogId, event);
 
   const url = `https://${blogId}/${uploadedFile}`;

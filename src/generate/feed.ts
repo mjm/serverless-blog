@@ -1,10 +1,9 @@
 import { Feed } from "feed";
-import * as parse from 'date-fns/parse';
 
 import * as site from "../model/site";
-import * as post from "../model/post";
+import { DecoratedPost } from "./types";
 
-export function generateFeed(siteConfig: site.Config, posts: Array<any>): Feed {
+export function generateFeed(siteConfig: site.Config, posts: DecoratedPost[]): Feed {
   const siteUrl = `https://${siteConfig.blogId}/`
   let feed = new Feed({
     id: siteUrl,
@@ -25,14 +24,13 @@ export function generateFeed(siteConfig: site.Config, posts: Array<any>): Feed {
 
   posts.forEach(p => {
     const url = `${siteUrl}${p.permalink.substring(1)}`;
-    const publishedAt = parse(p.publishedAt);
     feed.addItem({
-      title: p.title,
+      title: p.name,
       link: url,
       id: url,
-      date: publishedAt,
-      published: publishedAt,
-      content: p.renderedContent
+      date: p.published,
+      published: p.published,
+      content: p.content.toString()
     });
   });
 

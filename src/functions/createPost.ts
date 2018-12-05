@@ -1,10 +1,10 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 
-import * as post from "../model/post";
+import Post from "../model/post";
 
 export const handle: APIGatewayProxyHandler = async (event, context) => {
   const body = JSON.parse(event.body);
-  const createdPost: post.Post = await post.create(body);
+  const createdPost: Post = await Post.create(body);
 
   return {
     statusCode: 200,

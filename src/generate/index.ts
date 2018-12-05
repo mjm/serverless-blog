@@ -7,8 +7,9 @@ import * as mime from "mime-types";
 import { parse } from "date-fns";
 
 import * as site from "../model/site";
-import * as post from "../model/post";
+import Post from "../model/post";
 import * as page from "../model/page";
+import { DecoratedPost, DecoratedPage } from "./types";
 import embedTweets from "./embedTweets";
 import { AWSLoader } from "./awsLoader";
 import { generateFeed } from "./feed";
@@ -18,7 +19,7 @@ const s3 = new S3();
 
 export default async function generate(blogId: string): Promise<void> {
   const siteConfig = await site.getConfig(blogId);
-  const posts = await post.recent(blogId);
+  const posts = await Post.recent(blogId);
   const pages = await page.all(blogId);
 
   const r = createRenderer(siteConfig);
@@ -60,36 +61,24 @@ function createRenderer(siteConfig: site.Config): Renderer {
   };
 }
 
-interface DecoratedPost {
-  path: string;
-  title?: string;
-  content: string;
-  renderedContent: nunjucks.runtime.SafeString;
-  publishedAt: Date;
-  permalink: string;
-}
-
-async function renderPostContent(p: post.Post): Promise<DecoratedPost> {
-  const embedded = await embedTweets(p.content);
-  let decorated: DecoratedPost = {
-    path: p.path,
-    content: p.content,
-    renderedContent: new nunjucks.runtime.SafeString(marked(embedded)),
-    publishedAt: parse(p.publishedAt),
-    permalink: post.permalink(p)
-  };
-  if (p.title) {
-    decorated.title = p.title;
+async function renderPostContent(p: Post): Promise<DecoratedPost> {
+  let rendered: string;
+  if (typeof p.content === 'string') {
+    const embedded = await embedTweets(p.content);
+    rendered = marked(embedded);
+  } else {
+    rendered = p.content.html;
   }
-  return decorated;
-}
 
-interface DecoratedPage {
-  path: string;
-  name: string;
-  content: string;
-  renderedContent: nunjucks.runtime.SafeString;
-  permalink: string;
+  let decorated: DecoratedPost = {
+    type: p.type,
+    path: p.path,
+    name: p.name,
+    content: new nunjucks.runtime.SafeString(rendered),
+    published: p.published,
+    permalink: p.permalink
+  };
+  return decorated;
 }
 
 function renderPageContent(p: page.Page): DecoratedPage {
@@ -127,7 +116,7 @@ async function generatePosts(r: Renderer, siteConfig: site.Config, posts: Decora
 }
 
 async function generatePost(r: Renderer, siteConfig: site.Config, p: DecoratedPost): Promise<void> {
-  const body = await r('post.html', {
+  const body = await r(`${p.type}.html`, {
     site: siteConfig,
     post: p
   });
