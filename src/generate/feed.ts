@@ -9,16 +9,15 @@ export function generateFeed(siteConfig: site.Config, posts: DecoratedPost[]): F
     id: siteUrl,
     link: siteUrl,
     title: siteConfig.title,
-    copyright: "2018 Matt Moriarity",
+    copyright: `2018 ${siteConfig.author.name}`,
     feed: `${siteUrl}feed.atom`,
     feedLinks: {
       json: `${siteUrl}feed.json`
     },
-    // TODO pull this information from the site config
     author: {
-      name: "Matt Moriarity",
-      email: "matt@mattmoriarity.com",
-      link: "https://mattmoriarity.com"
+      name: siteConfig.author.name,
+      email: siteConfig.author.email,
+      link: siteUrl
     }
   });
 

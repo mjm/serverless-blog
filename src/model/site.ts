@@ -4,6 +4,12 @@ export interface Config {
   blogId: string;
   path: "config";
   title: string;
+  author: Author;
+}
+
+interface Author {
+  name: string;
+  email: string;
 }
 
 export async function getConfig(blogId: string): Promise<Config> {
