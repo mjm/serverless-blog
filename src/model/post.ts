@@ -82,18 +82,29 @@ export default class Post {
     }
   }
 
+  static async all(blogId: string): Promise<Post[]> {
+    return await this.fetchList(blogId, {});
+  }
+
   static async recent(blogId: string): Promise<Post[]> {
-    const query = {
+    return await this.fetchList(blogId, { limit: 20 });
+  }
+
+  static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
+    let query: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
       IndexName: 'published-posts',
       KeyConditionExpression: "blogId = :b",
       ExpressionAttributeValues: {
         ":b": blogId
       },
-      Limit: 15,
       ScanIndexForward: false,
       ReturnConsumedCapacity: "TOTAL"
     };
+
+    if (options.limit) {
+      query.Limit = options.limit;
+    }
 
     const result = await db.query(query).promise();
 

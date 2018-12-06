@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler, DynamoDBStreamHandler } from 'aws-lambda';
 
-import generate from "../generate";
+import generate, { GenerateSiteOptions } from "../generate";
 
 export async function handle(event, context) {
   if (event.Records) {
@@ -11,8 +11,12 @@ export async function handle(event, context) {
 };
 
 const handleHttp: APIGatewayProxyHandler = async (event, context) => {
-  const { blogId } = JSON.parse(event.body);
-  await generate(blogId);
+  const input = JSON.parse(event.body);
+  let options: GenerateSiteOptions = {};
+  if (input.full) {
+    options.full = true;
+  }
+  await generate(input.blogId, options);
 
   return {
     statusCode: 200,
@@ -33,6 +37,6 @@ const handleDynamoDBTrigger: DynamoDBStreamHandler = async (event, context) => {
   });
 
   // generate the sites of each affected blog
-  const generateSites = [...blogIds].map(generate);
+  const generateSites = [...blogIds].map(id => generate(id));
   await Promise.all(generateSites);
 };

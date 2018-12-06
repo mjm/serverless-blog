@@ -21,6 +21,10 @@ async function getTweetHtml(url: string): Promise<string> {
   console.log(`attempting to embed tweet URL ${url}`);
   const oembedUrl = `https://publish.twitter.com/oembed?url=${url}`;
   const response = await fetch(oembedUrl);
-  const json = await response.json();
-  return json.html;
+  if (response.ok) {
+    const json = await response.json();
+    return json.html;
+  } else {
+    return `<a href="${url}">${url}</a>`
+  }
 }

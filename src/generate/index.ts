@@ -17,7 +17,14 @@ import * as helpers from "./helpers";
 
 const s3 = new S3();
 
-export default async function generate(blogId: string): Promise<void> {
+export interface GenerateSiteOptions {
+  // Render every post instead of just the recent ones
+  full?: boolean;
+}
+
+export default async function generate(blogId: string, options?: GenerateSiteOptions): Promise<void> {
+  options = options || {};
+
   const siteConfig = await site.getConfig(blogId);
   const posts = await Post.recent(blogId);
   const pages = await page.all(blogId);
@@ -25,12 +32,17 @@ export default async function generate(blogId: string): Promise<void> {
   const r = createRenderer(siteConfig);
 
   // render the content of all posts before rendering templates
-  const decoratedPosts = await Promise.all(posts.map(p => renderPostContent(p)));
   const decoratedPages = pages.map(p => renderPageContent(p));
+  const decoratedIndexPosts = await Promise.all(posts.map(p => renderPostContent(p)));
+  let decoratedPosts = decoratedIndexPosts;
+  if (options.full) {
+    const allPosts = await Post.all(blogId);
+    decoratedPosts = await Promise.all(allPosts.map(p => renderPostContent(p)));
+  }
 
   let jobs = [
-    generateIndex(r, siteConfig, decoratedPosts),
-    generateFeeds(siteConfig, decoratedPosts),
+    generateIndex(r, siteConfig, decoratedIndexPosts),
+    generateFeeds(siteConfig, decoratedIndexPosts),
     generatePosts(r, siteConfig, decoratedPosts),
     generatePages(r, siteConfig, decoratedPages)
   ];
