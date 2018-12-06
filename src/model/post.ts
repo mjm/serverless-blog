@@ -144,16 +144,7 @@ export default class Post {
   }
 
   static async getByURL(url: string): Promise<Post> {
-    const u = new URL(url);
-    const blogId = u.hostname;
-    let path = u.pathname;
-    if (path.endsWith('/')) {
-      path = path.slice(0, -1);
-    }
-    if (path.startsWith('/')) {
-      path = path.substring(1);
-    }
-
+    const { blogId, path } = keyFromURL(url);
     return await this.get(blogId, path);
   }
 
@@ -162,6 +153,16 @@ export default class Post {
     await db.put({
       TableName: tableName,
       Item: this.data
+    }).promise();
+  }
+
+  static async deleteByURL(blogId: string, url: string): Promise<void> {
+    const key = keyFromURL(url);
+    if (blogId !== key.blogId) { return; }
+
+    await db.delete({
+      TableName: tableName,
+      Key: key
     }).promise();
   }
 }
@@ -197,4 +198,24 @@ function makeSlug(str: string): string {
   return slug(str, {
     lower: true
   });
+}
+
+interface PostKey {
+  blogId: string;
+  path: string;
+}
+
+function keyFromURL(url: string): PostKey {
+  const u = new URL(url);
+  const blogId = u.hostname;
+  let path = u.pathname;
+  if (path.endsWith('/')) {
+    path = path.slice(0, -1);
+  }
+  if (path.startsWith('/')) {
+    path = path.substring(1);
+  }
+  path = `posts/${path}`;
+
+  return { blogId, path };
 }

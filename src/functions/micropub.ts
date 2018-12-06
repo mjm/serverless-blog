@@ -65,9 +65,11 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
       body: ""
     };
   } else if (input.action === 'delete') {
+    console.log('deleting post from micropub input:', input);
+    await mp.delete(blogId, input);
     return {
-      statusCode: 200,
-      body: "Cool delete bro!"
+      statusCode: 204,
+      body: ""
     };
   } else {
     return {
