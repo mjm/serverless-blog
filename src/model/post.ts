@@ -200,9 +200,9 @@ function generatePath(data: PostData): string {
   }
 
   const published: Date = data.published ? parse(data.published) : new Date();
-  const dateStr = format(published, 'YYYY-MM-DD');
+  const dateStr = format(published, 'YYYY/MM');
 
-  return `posts/${dateStr}-${s}`;
+  return `posts/${dateStr}/${s}`;
 }
 
 function makeSlug(str: string): string {
