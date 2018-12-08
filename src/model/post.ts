@@ -36,7 +36,7 @@ const singularKeys = [
 ]
 
 export default class Post {
-  private data: PostData;
+  data: PostData;
 
   constructor(data: PostData) {
     this.data = data;

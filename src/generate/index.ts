@@ -1,18 +1,11 @@
-import * as path from "path";
+import * as _ from 'lodash';
+import * as SQS from 'aws-sdk/clients/sqs';
 
-import * as S3 from "aws-sdk/clients/s3";
-import * as nunjucks from "nunjucks";
-import * as marked from "marked";
-import { parse } from "date-fns";
-
-import * as site from "../model/site";
-import Post from "../model/post";
+import { archive } from "../model/cache";
 import * as page from "../model/page";
-import { DecoratedPost, DecoratedPage } from "./types";
-import { generateFeed } from "./feed";
-import * as post from "./post";
-import publish from "./publish";
-import * as renderer from "./renderer";
+import Post from "../model/post";
+import * as site from "../model/site";
+import { queue, generateQueueUrl as queueUrl } from "../model/queue";
 
 // expose the individual generator functions
 export { generateIndex as archiveIndex, generateMonth as archiveMonth } from "./archive";
@@ -21,98 +14,86 @@ export { default as page } from "./page";
 export { default as post } from "./post";
 
 export interface GenerateSiteOptions {
-  // Render every post instead of just the recent ones
-  full?: boolean;
+  index?: boolean;
+  posts?: "all" | "recent" | string[];
+  pages?: "all" | string[];
+  archives?: "all" | string[];
 }
 
 export default async function generate(blogId: string, options?: GenerateSiteOptions): Promise<void> {
-  options = options || {};
+  const config = await site.getConfig(blogId);
+  const requests = await planRequests(config, options || {});
 
-  const siteConfig = await site.getConfig(blogId);
-  const posts = await Post.recent(blogId);
-  const pages = await page.all(blogId);
+  // only 10 messages allowed in a batch
+  for (const rs of _.chunk(requests, 10)) {
+    await queue.sendMessageBatch({
+      QueueUrl: queueUrl,
+      Entries: rs
+    }).promise();
+  }
+}
 
-  const r = renderer.create(siteConfig);
+async function planRequests(site: site.Config, options: GenerateSiteOptions): Promise<SQS.SendMessageBatchRequestEntryList> {
+  let requests: SQS.SendMessageBatchRequestEntryList = [];
 
-  // render the content of all posts before rendering templates
-  const decoratedPages = pages.map(p => renderPageContent(p));
-  const decoratedIndexPosts = await post.decorate(posts);
-  let decoratedPosts = decoratedIndexPosts;
-  if (options.full) {
-    const allPosts = await Post.all(blogId);
-    decoratedPosts = await post.decorate(allPosts);
+  const addEvent = (type, id, body?) => {
+    requests.push({
+      Id: id,
+      MessageBody: JSON.stringify({ site, ...(body || {}) }),
+      MessageAttributes: {
+        eventType: { StringValue: type, DataType: 'String' }
+      }
+    });
+  };
+
+  let posts: Post[] = [];
+  if (options.posts) {
+    if (options.posts === 'all') {
+      posts = await Post.all(site.blogId);
+
+      // while we've already loaded all the posts, let's go rebuild the archive cache.
+      await archive.rebuild(site.blogId, posts);
+    } else if (options.posts === 'recent') {
+      posts = await Post.recent(site.blogId);
+    } else {
+      // It's not very cheap to do this with many post paths
+      posts = await Promise.all(options.posts.map(path => Post.get(site.blogId, path)));
+    }
   }
 
-  let jobs = [
-    generateIndex(r, siteConfig, decoratedIndexPosts),
-    generateFeeds(siteConfig, decoratedIndexPosts),
-    generatePosts(r, siteConfig, decoratedPosts),
-    generatePages(r, siteConfig, decoratedPages)
-  ];
+  let pages: page.Page[] = [];
+  if (options.pages) {
+    if (options.pages === 'all') {
+      pages = await page.all(site.blogId);
+    } else {
+      pages = await Promise.all(options.pages.map(path => page.get(site.blogId, path)));
+    }
+  }
 
-  await Promise.all(jobs);
-}
+  if (options.archives === 'all') {
+    options.archives = await archive.getMonths(site.blogId);
+  }
 
-function renderPageContent(p: page.Page): DecoratedPage {
-  return {
-    path: p.path,
-    name: p.name,
-    content: p.content,
-    renderedContent: new nunjucks.runtime.SafeString(marked(p.content)),
-    permalink: page.permalink(p)
-  };
-}
+  // Add the events to the list
 
-async function generateIndex(r: renderer.Renderer, siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
-  const body = await r('index.html', {
-    site: siteConfig,
-    posts
+  if (options.index) {
+    addEvent('generateIndex', 'index');
+  }
+
+  posts.forEach((p, i) => {
+    addEvent('generatePost', `post-${i}`, { post: p.data });
   });
 
-  console.log('publishing index.html');
-  await publish(siteConfig, 'index.html', body);
-}
-
-async function generateFeeds(siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
-  const feed = generateFeed(siteConfig, posts);
-
-  await Promise.all([
-    publish(siteConfig, 'feed.json', feed.json1()),
-    publish(siteConfig, 'feed.atom', feed.atom1()),
-    publish(siteConfig, 'feed.rss', feed.rss2())
-  ]);
-}
-
-async function generatePosts(r: renderer.Renderer, siteConfig: site.Config, posts: DecoratedPost[]): Promise<void> {
-  await Promise.all(posts.map(p => generatePost(r, siteConfig, p)));
-}
-
-async function generatePost(r: renderer.Renderer, siteConfig: site.Config, p: DecoratedPost): Promise<void> {
-  const body = await r(`${p.type}.html`, {
-    site: siteConfig,
-    post: p
+  pages.forEach((p, i) => {
+    addEvent('generatePage', `page-${i}`, { page: p });
   });
 
-  // transform /foo/bar/ to foo/bar/index.html
-  const pagePath = `${p.permalink.substring(1)}index.html`;
+  if (options.archives && options.archives.length > 0) {
+    addEvent('generateArchiveIndex', 'archive-index');
+    for (const month of options.archives) {
+      addEvent('generateArchiveMonth', `archive-${month}`, { month });
+    }
+  }
 
-  console.log(`publishing ${p.path} to ${pagePath}`);
-  await publish(siteConfig, pagePath, body);
-}
-
-async function generatePages(r: renderer.Renderer, siteConfig: site.Config, pages: DecoratedPage[]): Promise<void> {
-  await Promise.all(pages.map(p => generatePage(r, siteConfig, p)));
-}
-
-async function generatePage(r: renderer.Renderer, siteConfig: site.Config, p: DecoratedPage) {
-  const body = await r('page.html', {
-    site: siteConfig,
-    page: p
-  });
-
-  // transform /foo/bar/ to foo/bar/index.html
-  const pagePath = `${p.permalink.substring(1)}index.html`;
-
-  console.log(`publishing ${p.path} to ${pagePath}`);
-  await publish(siteConfig, pagePath, body);
+  return requests;
 }

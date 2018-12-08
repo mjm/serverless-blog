@@ -6,14 +6,13 @@ import { Page } from "../model/page";
 import * as generate from "../generate";
 import generateSite, { GenerateSiteOptions } from "../generate";
 
+interface GenerateInput extends GenerateSiteOptions {
+  blogId: string;
+}
+
 export const handleHttp: APIGatewayProxyHandler = async (event, context) => {
-  const input = JSON.parse(event.body);
-  let options: GenerateSiteOptions = {};
-  if (input.full) {
-    options.full = true;
-  }
-  // TODO change to send messages for the site.
-  await generateSite(input.blogId, options);
+  const input = JSON.parse(event.body) as GenerateInput;
+  await generateSite(input.blogId, input);
 
   return {
     statusCode: 200,

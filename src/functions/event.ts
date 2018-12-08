@@ -4,9 +4,7 @@ import { Converter } from 'aws-sdk/clients/dynamodb';
 import * as SQS from 'aws-sdk/clients/sqs';
 
 import * as site from "../model/site";
-
-const queueUrl = process.env.GENERATE_QUEUE_URL;
-const sqs = new SQS();
+import { queue, generateQueueUrl as queueUrl } from "../model/queue";
 
 export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
   const recordsByBlogId = collectRecords(event);
@@ -17,7 +15,7 @@ export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
     const requests = planRequests(config, records);
 
     for (const rs of _.chunk(requests, 10)) {
-      await sqs.sendMessageBatch({
+      await queue.sendMessageBatch({
         QueueUrl: queueUrl,
         Entries: rs
       }).promise();

@@ -28,6 +28,23 @@ export async function all(blogId: string): Promise<Page[]> {
   return result.Items as Page[];
 }
 
+export async function get(blogId: string, path: string): Promise<Page> {
+  if (!path.startsWith('pages/')) {
+    path = `pages/${path}`;
+  }
+
+  const query = {
+    TableName: tableName,
+    Key: {
+      blogId: blogId,
+      path: path
+    }
+  };
+
+  const result = await db.get(query).promise();
+  return result.Item as Page;
+}
+
 export function permalink(p: Page): string {
   return '/' + p.path.replace(/^pages\//, '') + '/';
 }

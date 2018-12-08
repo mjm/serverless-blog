@@ -60,6 +60,7 @@ functions:
           path: posts
   generate-site:
     handler: src/functions/generateSite.handleHttp
+    timeout: 10
     events:
       - http:
           method: post

@@ -51,8 +51,10 @@ class ArchiveCache {
     return months;
   }
 
-  async rebuild(blogId: string): Promise<void> {
-    const posts = await Post.all(blogId);
+  async rebuild(blogId: string, posts?: Post[]): Promise<void> {
+    if (!posts) {
+      posts = await Post.all(blogId);
+    }
 
     let months = new Set<string>();
     for (const p of posts) {
