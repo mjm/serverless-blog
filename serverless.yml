@@ -32,14 +32,24 @@ provider:
     Resource: "arn:aws:dynamodb:us-east-1:*:*"
   - Effect: Allow
     Action:
+      - sqs:ChangeMessageVisibility
+      - sqs:DeleteMessage
+      - sqs:GetQueueAttributes
+      - sqs:ReceiveMessage
+      - sqs:SendMessage
+    Resource: "arn:aws:sqs:us-east-1:*:*"
+  - Effect: Allow
+    Action:
       - s3:Put*
       - s3:Get*
     Resource: "arn:aws:s3:::*"
   environment:
     DYNAMODB_TABLE: ${self:custom.tableName}
+    GENERATE_QUEUE_URL:
+      Ref: generateQueue
 
-package:
-  individually: true
+      # package:
+      #   individually: true
 
 functions:
   create-post:
@@ -49,17 +59,28 @@ functions:
           method: post
           path: posts
   generate-site:
-    handler: src/functions/generateSite.handle
+    handler: src/functions/generateSite.handleHttp
     events:
       - http:
           method: post
           path: generate
+  db-events:
+    handler: src/functions/event.dbTrigger
+    events:
       - stream:
           type: dynamodb
           arn:
             Fn::GetAtt:
               - blogTable
               - StreamArn
+  generate-events:
+    handler: src/functions/generateSite.handleEvent
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - generateQueue
+              - Arn
   micropub-get:
     handler: src/functions/micropub.get
     events:
@@ -125,4 +146,7 @@ resources:
             Projection:
               ProjectionType: ALL
         StreamSpecification:
-          StreamViewType: KEYS_ONLY
+          StreamViewType: NEW_IMAGE
+    generateQueue:
+      Type: AWS::SQS::Queue
+      Properties: {}

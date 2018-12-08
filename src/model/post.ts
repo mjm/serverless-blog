@@ -1,10 +1,11 @@
 import { URL } from "url";
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
-import { format, parse } from "date-fns";
+import { format, parse, startOfMonth, endOfMonth } from "date-fns";
 import * as rs from "randomstring";
 
 import { db, tableName } from "./db";
+import { archive } from "./cache";
 
 type PostStatus = "draft" | "published";
 
@@ -90,6 +91,19 @@ export default class Post {
     return await this.fetchList(blogId, { limit: 20 });
   }
 
+  static async forMonth(blogId: string, month: string): Promise<Post[]> {
+    const start = `${month}-00`;
+    const end = `${month}-99`;
+
+    console.log(`getting posts between ${start} and ${end}`);
+    return await this.fetchList(blogId, {
+      between: {
+        start: start,
+        end: end
+      }
+    });
+  }
+
   static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
     let query: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
@@ -105,10 +119,15 @@ export default class Post {
     if (options.limit) {
       query.Limit = options.limit;
     }
+    if (options.between) {
+      query.KeyConditionExpression += " and (published between :start and :end)";
+      query.ExpressionAttributeValues[':start'] = options.between.start;
+      query.ExpressionAttributeValues[':end'] = options.between.end;
+    }
 
     const result = await db.query(query).promise();
 
-    console.log(`recent blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
+    console.log(`listing ${result.Items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
 
     return result.Items.map((i: PostData) => new Post(i));
   }
@@ -165,6 +184,8 @@ export default class Post {
       TableName: tableName,
       Item: this.data
     }).promise();
+
+    await archive.addDate(this.blogId, this.published);
   }
 
   static async deleteByURL(blogId: string, url: string): Promise<void> {
