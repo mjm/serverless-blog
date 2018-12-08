@@ -47,6 +47,8 @@ export default class Post {
   get type(): string { return this.data.type; }
   get name(): string { return this.data.name; }
   get content(): PostContent { return this.data.content; }
+  get photo(): string[] { return this.data.photo; }
+  get syndication(): string[] { return this.data.syndication; }
 
   get published(): Date { return this.getDate('published'); }
   get updated(): Date { return this.getDate('updated'); }

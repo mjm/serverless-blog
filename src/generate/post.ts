@@ -47,6 +47,8 @@ export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPos
       name: p.name,
       content: new runtime.SafeString(rendered),
       published: p.published,
+      photo: p.photo,
+      syndication: p.syndication,
       permalink: p.permalink
     };
     return decorated;

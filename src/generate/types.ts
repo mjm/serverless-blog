@@ -6,6 +6,8 @@ export interface DecoratedPost {
   name?: string;
   content: runtime.SafeString;
   published: Date;
+  photo?: string[];
+  syndication?: string[];
   permalink: string;
 }
 
