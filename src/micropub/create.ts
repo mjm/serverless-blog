@@ -14,6 +14,9 @@ export default async function create(blogId: string, input: MicropubCreateInput)
   // Don't bring the action from the Micropub input
   delete newPost.action;
 
+  // Don't include an access token if it was passed in the body
+  delete newPost.access_token;
+
   // posts from Micropub are never drafts
   if (!newPost.published) {
     newPost.status = "published";
