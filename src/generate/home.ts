@@ -1,6 +1,6 @@
 import Post from "../model/post";
 import { Config } from "../model/site";
-import { generateFeed } from "./feed";
+import { generateFeed, fixJSONFeed } from "./feed";
 import { decorate } from "./post";
 import publish from "./publish";
 import * as renderer from "./renderer";
@@ -32,7 +32,7 @@ async function generateFeeds(site: Config, posts: DecoratedPost[]): Promise<void
   console.log('generating site feed');
   const feed = generateFeed(site, posts);
 
-  const json = publish(site, 'feed.json', feed.json1());
+  const json = publish(site, 'feed.json', fixJSONFeed(feed.json1()));
   const atom = publish(site, 'feed.atom', feed.atom1());
   const rss  = publish(site, 'feed.rss',  feed.rss2());
 

@@ -35,3 +35,16 @@ export function generateFeed(siteConfig: site.Config, posts: DecoratedPost[]): F
 
   return feed;
 }
+
+// this is a workaround because feed uses the wrong key for html content
+// https://github.com/jpmonette/feed/pull/81
+export function fixJSONFeed(json: string): string {
+  let parsed = JSON.parse(json);
+
+  parsed.items.forEach(item => {
+    item.content_html = item.html_content;
+    delete item.html_content;
+  });
+
+  return JSON.stringify(parsed);
+}
