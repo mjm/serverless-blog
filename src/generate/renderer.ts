@@ -1,7 +1,7 @@
 import * as nunjucks from "nunjucks";
+import S3Loader from "nunjucks-s3-loader";
 
 import { Config } from "../model/site";
-import { AWSLoader } from "./awsLoader";
 import * as helpers from "./helpers";
 
 /**
@@ -49,7 +49,10 @@ export function get(siteConfig: Config): Renderer {
  * @returns A function that will render a template for the site
  */
 export function create(siteConfig: Config): Renderer {
-  const loader = new AWSLoader({ bucket: siteConfig.blogId });
+  const loader = new S3Loader({
+    bucket: siteConfig.blogId,
+    prefix: '_templates/'
+  });
   const env = new nunjucks.Environment(loader, { autoescape: true });
 
   env.addFilter('dateformat', helpers.dateformat);
