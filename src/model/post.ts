@@ -23,7 +23,10 @@ export interface PostData {
   content: PostContent;
   published?: string;
   updated?: string;
+
+  // temporary attributes, don't persist
   status?: PostStatus;
+  slug?: string;
 
   [propName: string]: any;
 }
@@ -32,7 +35,8 @@ const singularKeys = [
   'name',
   'content',
   'published',
-  'updated'
+  'updated',
+  'mp-slug'
 ]
 
 export default class Post {
@@ -83,6 +87,10 @@ export default class Post {
     } else {
       return null;
     }
+  }
+
+  static get singularKeys(): string[] {
+    return singularKeys;
   }
 
   static async all(blogId: string): Promise<Post[]> {
@@ -151,6 +159,8 @@ export default class Post {
 
     // Don't persist the post status, it is represented by publishedAt
     delete data.status;
+    // Don't persist the slug, it should be incorporated into the path
+    delete data.slug;
 
     const post = new Post(data);
     await post.save();
@@ -203,7 +213,9 @@ export default class Post {
 
 function generatePath(data: PostData): string {
   let s: string;
-  if (data.name) {
+  if (data.slug) {
+    s = data.slug;
+  } else if (data.name) {
     s = makeSlug(data.name);
   } else {
     let content: string;

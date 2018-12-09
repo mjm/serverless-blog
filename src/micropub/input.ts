@@ -1,11 +1,14 @@
 import * as querystring from "querystring";
 import { APIGatewayProxyEvent } from "aws-lambda";
 
+import Post from "../model/post";
+
 export type MicropubInput = MicropubCreateInput | MicropubUpdateInput | MicropubDeleteInput;
 
 export interface MicropubCreateInput {
   action: "create";
 
+  "mp-slug"?: string;
   type: string;
   name?: string;
   content?: string;
@@ -38,6 +41,7 @@ export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
   if (contentType.startsWith('application/x-www-form-urlencoded')) {
     let parsedQs = querystring.parse(event.body) as any;
     console.log('Got query string input:', parsedQs);
+
     const type = parsedQs.h;
     delete parsedQs.h;
 
@@ -55,19 +59,13 @@ export function fromEvent(event: APIGatewayProxyEvent): MicropubInput {
         type
       };
 
-      // we only expect a single value for these keys
-      singularize(input, [
-        'name',
-        'content',
-        'published'
-      ]);
+      // we only expect a single value for some
+      singularize(input, Post.singularKeys);
 
       return input;
     } else if (parsedJson.action === 'update') {
-      // TODO
       return parsedJson as MicropubUpdateInput;
     } else if (parsedJson.action === 'delete') {
-      // TODO
       return parsedJson as MicropubDeleteInput;
     }
   }

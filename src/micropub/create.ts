@@ -22,5 +22,10 @@ export default async function create(blogId: string, input: MicropubCreateInput)
     newPost.status = "published";
   }
 
+  if (newPost['mp-slug']) {
+    newPost.slug = newPost['mp-slug'];
+    delete newPost['mp-slug'];
+  }
+
   return await Post.create(newPost);
 }
