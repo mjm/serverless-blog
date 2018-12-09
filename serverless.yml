@@ -52,12 +52,6 @@ provider:
       #   individually: true
 
 functions:
-  create-post:
-    handler: src/functions/createPost.handle
-    events:
-      - http:
-          method: post
-          path: posts
   generate-site:
     handler: src/functions/generateSite.handleHttp
     timeout: 15
