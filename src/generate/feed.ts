@@ -29,7 +29,7 @@ export function generateFeed(siteConfig: site.Config, posts: DecoratedPost[]): F
       id: url,
       date: p.published,
       published: p.published,
-      content: p.content.toString()
+      content: postContent(p)
     });
   });
 
@@ -47,4 +47,18 @@ export function fixJSONFeed(json: string): string {
   });
 
   return JSON.stringify(parsed);
+}
+
+function postContent(p: DecoratedPost): string {
+  let content = p.content.toString();
+
+  if (p.photo) {
+    for (const photo of p.photo) {
+      content += `
+      <figure><img src="${photo}"></figure>
+      `;
+    }
+  }
+
+  return content;
 }

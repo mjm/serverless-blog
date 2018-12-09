@@ -1,7 +1,9 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import * as S3 from "aws-sdk/clients/s3";
 import Busboy from "busboy";
+import * as mime from "mime-types";
 import uuid from "uuid/v4";
+import { format } from "date-fns";
 
 import * as headers from "../util/headers";
 import * as mp from "../micropub";
@@ -27,9 +29,12 @@ export const handle: APIGatewayProxyHandler = async (event, context) => {
 
 async function upload(blogId: string, event): Promise<string> {
   return new Promise<string>((resolve, reject) => {
+    const prefix = format(new Date(), 'YYYY/MM');
+
     const busboy = new Busboy({ headers: event.headers });
     busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-      const key = `media/${uuid()}/${filename}`;
+      const ext = mimetype ? '.' + mime.extension(mimetype) : '';
+      const key = `media/${prefix}/${uuid()}${ext}`;
       let buffers: Buffer[] = [];
       console.log('Uploading object to', key);
 
