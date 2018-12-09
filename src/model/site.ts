@@ -5,6 +5,7 @@ export interface Config {
   path: "config";
   title: string;
   author: Author;
+  pings?: string[];
 }
 
 interface Author {

@@ -5,6 +5,7 @@ import Post, { PostData } from "../model/post";
 import { Page } from "../model/page";
 import * as generate from "../generate";
 import generateSite, { GenerateSiteOptions } from "../generate";
+import sendPings from "../generate/ping";
 
 interface GenerateInput extends GenerateSiteOptions {
   blogId: string;
@@ -57,6 +58,7 @@ interface GenerateArchiveEvent extends GenerateEvent {
 const eventHandlers = {
   async generateIndex(e: GenerateIndexEvent): Promise<void> {
     await generate.index(e.site);
+    await sendPings(e.site);
   },
 
   async generatePost(e: GeneratePostEvent): Promise<void> {
