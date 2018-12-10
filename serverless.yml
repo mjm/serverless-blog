@@ -19,6 +19,8 @@ provider:
   runtime: nodejs8.10
   apiName: serverless-blog
   memorySize: 256
+  apiKeys:
+  - sls-blog-${self:provider.stage}
   iamRoleStatements:
   - Effect: Allow
     Action:
@@ -59,6 +61,7 @@ functions:
       - http:
           method: post
           path: generate
+          private: true
   db-events:
     handler: src/functions/event.dbTrigger
     events:
