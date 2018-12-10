@@ -42,8 +42,9 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
 
 export const post: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
-  const input = mp.input.fromEvent(event);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
+
+  const input = await mp.input.fromEvent(blogId, event);
   console.log('got micropub request for', blogId);
 
   if (input.action === 'create') {
