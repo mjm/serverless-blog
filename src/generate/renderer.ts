@@ -68,3 +68,14 @@ export function create(siteConfig: Config): Renderer {
     });
   };
 }
+
+/**
+ * Invalidates the renderer cache.
+ *
+ * This should be done before handling a request so that templates are up-to-date.
+ * Lambda reuses processes between functions, so this is needed to be able to ensure
+ * we are using the right version of the templates.
+ */
+export function invalidate(): void {
+  cache.clear();
+}

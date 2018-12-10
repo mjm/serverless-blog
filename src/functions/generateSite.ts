@@ -6,6 +6,7 @@ import { Page } from "../model/page";
 import * as generate from "../generate";
 import generateSite, { GenerateSiteOptions } from "../generate";
 import sendPings from "../generate/ping";
+import * as renderer from "../generate/renderer";
 
 interface GenerateInput extends GenerateSiteOptions {
   blogId: string;
@@ -25,6 +26,7 @@ export const handleHttp: APIGatewayProxyHandler = async (event, context) => {
 };
 
 export async function handleEvent(event, context): Promise<void> {
+  renderer.invalidate();
   await Promise.all(event.Records.map(handleMessage));
 }
 
