@@ -39,10 +39,9 @@ export interface MicropubDeleteInput {
 export async function fromEvent(blogId: string, event: APIGatewayProxyEvent): Promise<MicropubInput> {
   const contentType = event.headers['content-type'] || '';
 
-  if (contentType.startsWith('application/x-www-form-urlencoded')) {
-    return handleUrlEncodedRequest(event.body);
-  } else if (contentType.startsWith('multipart/form-data')) {
-    return await handleMultipartRequest(blogId, event);
+  if (contentType.startsWith('application/x-www-form-urlencoded')
+      || contentType.startsWith('multipart/form-data')) {
+    return await handleFormRequest(blogId, event);
   } else if (contentType.startsWith('application/json')) {
     return handleJsonRequest(event.body);
   }
@@ -51,18 +50,7 @@ export async function fromEvent(blogId: string, event: APIGatewayProxyEvent): Pr
   return null;
 }
 
-function handleUrlEncodedRequest(body: string): MicropubInput {
-  let parsedQs = querystring.parse(body) as any;
-  console.log('Got query string input:', parsedQs);
-
-  const type = parsedQs.h;
-  delete parsedQs.h;
-
-  // url encoded requests are always creates
-  return {...parsedQs, type, action: "create"};
-}
-
-async function handleMultipartRequest(blogId: string, event: APIGatewayProxyEvent): Promise<MicropubInput> {
+async function handleFormRequest(blogId: string, event: APIGatewayProxyEvent): Promise<MicropubInput> {
   let input: MicropubCreateInput = {
     action: "create",
     type: null
