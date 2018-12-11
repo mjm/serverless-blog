@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import * as mp from "../micropub";
 import Post from "../model/post";
 import * as headers from "../util/headers";
+import * as scope from "../util/scope";
 
 export const get: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
@@ -46,6 +47,12 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
 
   const input = await mp.input.fromEvent(blogId, event);
   console.log('got micropub request for', blogId);
+
+  // check if the auth token has the matching scope for the action
+  const scopeCheck = scope.check(event, input.action);
+  if (scopeCheck) {
+    return scopeCheck;
+  }
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
@@ -96,13 +103,13 @@ export const verify: CustomAuthorizerHandler = async (event, context) => {
 
   if (response.ok) {
     const { me, scope } = await response.json();
-    const scopes = scope.split(' ') as string[];
-
-    const allowAccess = scopes.includes('create');
-    console.log('allowing access for', me, 'in scopes', scopes);
+    console.log('allowing access for', me, 'with scopes:', scope);
 
     return {
       principalId: me,
+      context: {
+        scope
+      },
       policyDocument: mp.auth.createPolicy(true, methodArn)
     };
   } else {

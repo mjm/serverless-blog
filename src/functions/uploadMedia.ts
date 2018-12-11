@@ -3,6 +3,7 @@ import * as S3 from "aws-sdk/clients/s3";
 import Busboy from "busboy";
 
 import * as headers from "../util/headers";
+import * as scope from "../util/scope";
 import * as mp from "../micropub";
 import Uploader from "../micropub/upload";
 
@@ -12,6 +13,11 @@ export const handle: APIGatewayProxyHandler = async (event, context) => {
   headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
   console.log('got micropub request for', blogId);
+
+  const scopeCheck = scope.check(event, ['create', 'media']);
+  if (scopeCheck) {
+    return scopeCheck;
+  }
 
   const urls = await upload(blogId, event);
 
