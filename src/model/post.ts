@@ -36,6 +36,7 @@ const singularKeys = [
   'content',
   'published',
   'updated',
+  'post-status',
   'mp-slug'
 ]
 

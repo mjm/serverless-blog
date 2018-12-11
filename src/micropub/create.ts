@@ -17,15 +17,16 @@ export default async function create(blogId: string, input: MicropubCreateInput)
   // Don't include an access token if it was passed in the body
   delete newPost.access_token;
 
-  // posts from Micropub are never drafts
-  if (!newPost.published) {
-    newPost.status = "published";
-  }
-
-  if (newPost['mp-slug']) {
-    newPost.slug = newPost['mp-slug'];
-    delete newPost['mp-slug'];
-  }
+  translateKey(newPost, 'mp-slug', 'slug');
+  translateKey(newPost, 'post-status', 'status');
+  newPost.status = newPost.status || 'published';
 
   return await Post.create(newPost);
+}
+
+function translateKey(o: {[key: string]: any}, oldKey: string, newKey: string) {
+  if (o[oldKey]) {
+    o[newKey] = o[oldKey];
+    delete o[oldKey];
+  }
 }
