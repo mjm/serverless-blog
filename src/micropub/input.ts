@@ -32,19 +32,19 @@ export interface MicropubDeleteInput {
   url: string;
 }
 
-export async function fromEvent(blogId: string, event): Promise<MicropubInput> {
+export async function fromEvent(event): Promise<MicropubInput> {
   if (typeof event.body === 'string') {
     console.error('Input has unexpected content type', event.headers['Content-Type']);
   }
 
   if ('h' in event.body) {
-    return await handleFormRequest(blogId, event);
+    return await handleFormRequest(event);
   } else {
     return handleJsonRequest(event.body);
   }
 }
 
-async function handleFormRequest(blogId: string, event): Promise<MicropubInput> {
+async function handleFormRequest(event): Promise<MicropubInput> {
   let input: MicropubCreateInput = {
     action: "create",
     type: null
@@ -60,7 +60,7 @@ async function handleFormRequest(blogId: string, event): Promise<MicropubInput> 
   }
 
   // Upload any files found in the form input
-  const uploader = new Uploader(blogId);
+  const uploader = new Uploader(event.blogId);
   for (const { field, body, mimetype } of event.uploadedFiles) {
     uploader.upload(field, body, mimetype);
   }

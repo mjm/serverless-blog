@@ -1,7 +1,7 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 
-export function check(event: APIGatewayProxyEvent, scopes: string | string[]): null | APIGatewayProxyResult {
-  const eventScopes = (event.requestContext.authorizer.scope || '').split(' ');
+export function check(event, scopes: string | string[]): null | APIGatewayProxyResult {
+  const eventScopes = event.scopes;
   const checkScopes = (typeof scopes === 'string') ? [ scopes ] : scopes;
 
   console.log('checking scopes, need:', checkScopes, 'have:', eventScopes);

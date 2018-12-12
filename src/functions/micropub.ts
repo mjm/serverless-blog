@@ -1,16 +1,15 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, CustomAuthorizerHandler } from "aws-lambda";
+import { CustomAuthorizerHandler } from "aws-lambda";
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import Post from "../model/post";
-import { formDataParser } from "../middlewares";
+import { authorizer, formDataParser } from "../middlewares";
 import * as scope from "../util/scope";
 
 export const get = middy(async (event, context) => {
-  const blogId = mp.identify(event.requestContext.authorizer.principalId);
-  console.log('got micropub request for', blogId);
+  console.log('got micropub request for', event.blogId);
 
   const q = event.queryStringParameters.q;
 
@@ -44,13 +43,13 @@ export const get = middy(async (event, context) => {
 
 get
   .use(mw.httpHeaderNormalizer())
-  .use(mw.cors());
+  .use(mw.cors())
+  .use(authorizer());
 
 export const post = middy(async (event, context) => {
-  const blogId = mp.identify(event.requestContext.authorizer.principalId);
-  console.log('got micropub request for', blogId);
+  console.log('got micropub request for', event.blogId);
 
-  const input = await mp.input.fromEvent(blogId, event);
+  const input = await mp.input.fromEvent(event);
 
   // check if the auth token has the matching scope for the action
   const scopeCheck = scope.check(event, input.action);
@@ -60,8 +59,8 @@ export const post = middy(async (event, context) => {
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
-    const p = await mp.create(blogId, input);
-    const loc = `https://${blogId}${p.permalink}`;
+    const p = await mp.create(event.blogId, input);
+    const loc = `https://${event.blogId}${p.permalink}`;
     return {
       statusCode: 201,
       headers: {
@@ -71,14 +70,14 @@ export const post = middy(async (event, context) => {
     };
   } else if (input.action === 'update') {
     console.log('updating post from micropub input:', input);
-    await mp.update(blogId, input);
+    await mp.update(event.blogId, input);
     return {
       statusCode: 204,
       body: ""
     };
   } else if (input.action === 'delete') {
     console.log('deleting post from micropub input:', input);
-    await mp.delete(blogId, input);
+    await mp.delete(event.blogId, input);
     return {
       statusCode: 204,
       body: ""
@@ -94,6 +93,7 @@ export const post = middy(async (event, context) => {
 post
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
+  .use(authorizer())
   .use(mw.jsonBodyParser())
   .use(formDataParser());
 
