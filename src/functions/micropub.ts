@@ -1,4 +1,6 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent, CustomAuthorizerHandler } from "aws-lambda";
+import * as middy from "middy";
+import * as mw from "middy/middlewares";
 import fetch from "node-fetch";
 
 import * as mp from "../micropub";
@@ -6,7 +8,7 @@ import Post from "../model/post";
 import * as headers from "../util/headers";
 import * as scope from "../util/scope";
 
-export const get: APIGatewayProxyHandler = async (event, context) => {
+export const get = middy(async (event, context) => {
   headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
   console.log('got micropub request for', blogId);
@@ -39,9 +41,11 @@ export const get: APIGatewayProxyHandler = async (event, context) => {
       })
     };
   }
-};
+});
 
-export const post: APIGatewayProxyHandler = async (event, context) => {
+get.use(mw.cors());
+
+export const post = middy(async (event, context) => {
   headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
 
@@ -85,7 +89,9 @@ export const post: APIGatewayProxyHandler = async (event, context) => {
       body: JSON.stringify({error: 'invalid_request'})
     };
   }
-};
+});
+
+post.use(mw.cors());
 
 const tokensUrl = 'https://tokens.indieauth.com/token';
 

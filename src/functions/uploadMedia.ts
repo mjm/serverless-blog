@@ -1,6 +1,8 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import * as S3 from "aws-sdk/clients/s3";
 import Busboy from "busboy";
+import * as middy from "middy";
+import * as mw from "middy/middlewares";
 
 import * as headers from "../util/headers";
 import * as scope from "../util/scope";
@@ -9,7 +11,7 @@ import Uploader from "../micropub/upload";
 
 const s3 = new S3();
 
-export const handle: APIGatewayProxyHandler = async (event, context) => {
+export const handle = middy(async (event, context) => {
   headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
   console.log('got micropub request for', blogId);
@@ -28,7 +30,9 @@ export const handle: APIGatewayProxyHandler = async (event, context) => {
     },
     body: ""
   }
-};
+});
+
+handle.use(mw.cors());
 
 async function upload(blogId: string, event): Promise<string[]> {
   const uploader = new Uploader(blogId);
