@@ -1,5 +1,3 @@
-import { Readable } from "stream";
-
 import * as S3 from "aws-sdk/clients/s3";
 import { format } from "date-fns";
 import * as mime from "mime-types";
@@ -9,34 +7,23 @@ export default class Uploader {
   readonly bucket: string;
   client: S3;
   private readonly prefix: string;
-  private uploads: Promise<string>[];
+  private uploads: Map<string, Promise<string>[]>;
 
   constructor(bucket: string) {
     this.bucket = bucket;
     this.client = new S3();
     this.prefix = `media/${format(new Date(), 'YYYY/MM')}`;
-    this.uploads = [];
+    this.uploads = new Map();
   }
 
-  upload(file: Readable, mimetype: string) {
+  upload(field: string, body: Buffer, mimetype: string) {
     const ext = mimetype ? '.' + mime.extension(mimetype) : '';
     const key = `${this.prefix}/${uuid()}${ext}`;
 
-    let buffers: Buffer[] = [];
     console.log('Uploading file to', key);
 
-    file.on('data', chunk => {
-      if (typeof chunk === 'string') {
-        buffers.push(Buffer.from(chunk));
-      } else {
-        buffers.push(chunk)
-      }
-    });
-
-    file.on('end', () => {
-      const url = this.doUpload(Buffer.concat(buffers), key, mimetype);
-      this.uploads.push(url);
-    });
+    const url = this.doUpload(body, key, mimetype);
+    this.saveUrl(field, url);
   }
 
   private async doUpload(body: Buffer, key: string, mimetype: string): Promise<string> {
@@ -51,7 +38,22 @@ export default class Uploader {
     return `https://${this.bucket}/${key}`;
   }
 
-  uploadedUrls(): Promise<string[]> {
-    return Promise.all(this.uploads);
+  private saveUrl(field: string, url: Promise<string>) {
+    let urls = this.uploads.get(field);
+    if (!urls) {
+      urls = [];
+      this.uploads.set(field, urls);
+    }
+    urls.push(url);
+  }
+
+  async uploadedUrls(): Promise<{[key: string]: string[]}> {
+    let result = {};
+
+    for (const [field, urlPromises] of this.uploads) {
+      result[field] = await Promise.all(urlPromises);
+    }
+
+    return result;
   }
 }

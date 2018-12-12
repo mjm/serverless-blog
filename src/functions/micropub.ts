@@ -5,6 +5,7 @@ import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import Post from "../model/post";
+import { formDataParser } from "../middlewares";
 import * as scope from "../util/scope";
 
 export const get = middy(async (event, context) => {
@@ -93,7 +94,8 @@ export const post = middy(async (event, context) => {
 post
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
-  .use(mw.jsonBodyParser());
+  .use(mw.jsonBodyParser())
+  .use(formDataParser());
 
 const tokensUrl = 'https://tokens.indieauth.com/token';
 
