@@ -37,7 +37,7 @@ export interface MicropubDeleteInput {
 }
 
 export async function fromEvent(blogId: string, event: APIGatewayProxyEvent): Promise<MicropubInput> {
-  const contentType = event.headers['content-type'] || '';
+  const contentType = event.headers['Content-Type'] || '';
 
   if (contentType.startsWith('application/x-www-form-urlencoded')
       || contentType.startsWith('multipart/form-data')) {
@@ -59,7 +59,9 @@ async function handleFormRequest(blogId: string, event: APIGatewayProxyEvent): P
   const uploader = new Uploader(blogId);
 
   await new Promise<void>((resolve, reject) => {
-    const busboy = new Busboy({ headers: event.headers });
+    const busboy = new Busboy({
+      headers: { 'content-type': event.headers['Content-Type'] }
+    });
 
     busboy.on('field', (field, value) => {
       console.log('Got form field', field, value);
@@ -105,15 +107,14 @@ async function handleFormRequest(blogId: string, event: APIGatewayProxyEvent): P
   return input;
 }
 
-function handleJsonRequest(body: string): MicropubInput {
-  const parsedJson = JSON.parse(body);
-  console.log('Got JSON for Micropub:', parsedJson);
-  if ('type' in parsedJson) {
+function handleJsonRequest(body: any): MicropubInput {
+  console.log('Got JSON for Micropub:', body);
+  if ('type' in body) {
     console.log('Found type key in JSON, treating as a create');
-    const type = parsedJson.type[0].replace(/^h-/, '');
+    const type = body.type[0].replace(/^h-/, '');
     let input: MicropubCreateInput = {
       action: "create",
-      ...parsedJson.properties,
+      ...body.properties,
       type
     };
 
@@ -121,10 +122,10 @@ function handleJsonRequest(body: string): MicropubInput {
     singularize(input, Post.singularKeys);
 
     return input;
-  } else if (parsedJson.action === 'update') {
-    return parsedJson as MicropubUpdateInput;
-  } else if (parsedJson.action === 'delete') {
-    return parsedJson as MicropubDeleteInput;
+  } else if (body.action === 'update') {
+    return body as MicropubUpdateInput;
+  } else if (body.action === 'delete') {
+    return body as MicropubDeleteInput;
   }
 }
 

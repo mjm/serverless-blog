@@ -5,11 +5,9 @@ import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import Post from "../model/post";
-import * as headers from "../util/headers";
 import * as scope from "../util/scope";
 
 export const get = middy(async (event, context) => {
-  headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
   console.log('got micropub request for', blogId);
 
@@ -43,14 +41,15 @@ export const get = middy(async (event, context) => {
   }
 });
 
-get.use(mw.cors());
+get
+  .use(mw.httpHeaderNormalizer())
+  .use(mw.cors());
 
 export const post = middy(async (event, context) => {
-  headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
+  console.log('got micropub request for', blogId);
 
   const input = await mp.input.fromEvent(blogId, event);
-  console.log('got micropub request for', blogId);
 
   // check if the auth token has the matching scope for the action
   const scopeCheck = scope.check(event, input.action);
@@ -91,7 +90,10 @@ export const post = middy(async (event, context) => {
   }
 });
 
-post.use(mw.cors());
+post
+  .use(mw.httpHeaderNormalizer())
+  .use(mw.cors())
+  .use(mw.jsonBodyParser());
 
 const tokensUrl = 'https://tokens.indieauth.com/token';
 

@@ -4,7 +4,6 @@ import Busboy from "busboy";
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 
-import * as headers from "../util/headers";
 import * as scope from "../util/scope";
 import * as mp from "../micropub";
 import Uploader from "../micropub/upload";
@@ -12,7 +11,6 @@ import Uploader from "../micropub/upload";
 const s3 = new S3();
 
 export const handle = middy(async (event, context) => {
-  headers.normalize(event.headers);
   const blogId = mp.identify(event.requestContext.authorizer.principalId);
   console.log('got micropub request for', blogId);
 
@@ -32,14 +30,18 @@ export const handle = middy(async (event, context) => {
   }
 });
 
-handle.use(mw.cors());
+handle
+  .use(mw.httpHeaderNormalizer())
+  .use(mw.cors());
 
 async function upload(blogId: string, event): Promise<string[]> {
   const uploader = new Uploader(blogId);
 
   // wait for the form data to be processed
   await new Promise<void>((resolve, reject) => {
-    const busboy = new Busboy({ headers: event.headers });
+    const busboy = new Busboy({
+      headers: { 'content-type': event.headers['Content-Type'] }
+    });
     busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
       uploader.upload(file, mimetype);
     });

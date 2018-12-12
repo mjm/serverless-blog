@@ -1,4 +1,6 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
+import * as middy from "middy";
+import * as mw from "middy/middlewares";
 
 import * as site from "../model/site";
 import Post, { PostData } from "../model/post";
@@ -12,8 +14,8 @@ interface GenerateInput extends GenerateSiteOptions {
   blogId: string;
 }
 
-export const handleHttp: APIGatewayProxyHandler = async (event, context) => {
-  const input = JSON.parse(event.body) as GenerateInput;
+export const handleHttp = middy(async (event, context) => {
+  const input = event.body as GenerateInput;
   await generateSite(input.blogId, input);
 
   return {
@@ -23,7 +25,11 @@ export const handleHttp: APIGatewayProxyHandler = async (event, context) => {
       message: "Your website was queued for regeneration."
     })
   }
-};
+});
+
+handleHttp
+  .use(mw.httpHeaderNormalizer())
+  .use(mw.jsonBodyParser());
 
 export async function handleEvent(event, context): Promise<void> {
   renderer.invalidate();
