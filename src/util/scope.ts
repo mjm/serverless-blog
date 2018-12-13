@@ -1,6 +1,7 @@
 import { APIGatewayProxyResult } from "aws-lambda";
+import * as httpError from "http-errors";
 
-export function check(event, scopes: string | string[]): null | APIGatewayProxyResult {
+export function check(event, scopes: string | string[]): void {
   const eventScopes = event.scopes;
   const checkScopes = (typeof scopes === 'string') ? [ scopes ] : scopes;
 
@@ -22,13 +23,5 @@ export function check(event, scopes: string | string[]): null | APIGatewayProxyR
     scopeText = checkScopes[0];
   }
 
-  const body = {
-    error: 'insufficient_scope',
-    error_description: `Missing required scope: ${scopeText}. Your token has scopes: ${eventScopes.join(', ')}.`
-  };
-
-  return {
-    statusCode: 403,
-    body: JSON.stringify(body)
-  };
+  throw httpError(401, `Missing required scope: ${scopeText}. Your token has scopes: ${eventScopes.join(', ')}.`, { code: 'insufficient_scope' });
 }

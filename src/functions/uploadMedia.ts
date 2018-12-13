@@ -1,17 +1,15 @@
+import * as httpError from "http-errors";
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 
 import * as scope from "../util/scope";
 import Uploader from "../micropub/upload";
-import { authorizer, formDataParser } from "../middlewares";
+import { authorizer, errorHandler, formDataParser } from "../middlewares";
 
 export const handle = middy(async (event, context) => {
   console.log('got micropub request for', event.blogId);
 
-  const scopeCheck = scope.check(event, ['create', 'media']);
-  if (scopeCheck) {
-    return scopeCheck;
-  }
+  scope.check(event, ['create', 'media']);
 
   const urls = await upload(event);
 
@@ -25,17 +23,24 @@ export const handle = middy(async (event, context) => {
 });
 
 handle
+  .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
   .use(authorizer())
   .use(formDataParser());
 
 async function upload(event): Promise<string[]> {
-  const uploader = new Uploader(event.blogId);
-  for (const { field, body, mimetype } of event.uploadedFiles) {
-    // TODO blow up if there's more than one or if field != 'file'
-    uploader.upload(field, body, mimetype);
+  if (event.uploadedFiles.length !== 1) {
+    throw new httpError.BadRequest(`Unexpected number of files in request: expected 1, got ${event.uploadedFiles.length}`);
   }
+
+  const uploader = new Uploader(event.blogId);
+  const { field, body, mimetype } = event.uploadedFiles[0]
+  if (field !== 'file') {
+    throw new httpError.BadRequest(`Unexpected field name '${field}'. Field name should be 'file'.`);
+  }
+
+  uploader.upload(field, body, mimetype);
 
   const urls = await uploader.uploadedUrls();
   return urls.file;

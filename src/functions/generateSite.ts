@@ -2,6 +2,7 @@ import { APIGatewayProxyHandler } from 'aws-lambda';
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 
+import { errorHandler } from "../middlewares";
 import * as site from "../model/site";
 import Post, { PostData } from "../model/post";
 import { Page } from "../model/page";
@@ -29,7 +30,8 @@ export const handleHttp = middy(async (event, context) => {
 
 handleHttp
   .use(mw.httpHeaderNormalizer())
-  .use(mw.jsonBodyParser());
+  .use(mw.jsonBodyParser())
+  .use(errorHandler());
 
 export async function handleEvent(event, context): Promise<void> {
   renderer.invalidate();

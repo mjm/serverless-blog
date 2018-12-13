@@ -1,3 +1,5 @@
+import * as httpError from "http-errors";
+
 import Post from "../model/post";
 import Uploader from "../micropub/upload";
 
@@ -34,7 +36,7 @@ export interface MicropubDeleteInput {
 
 export async function fromEvent(event): Promise<MicropubInput> {
   if (typeof event.body === 'string') {
-    console.error('Input has unexpected content type', event.headers['Content-Type']);
+    throw new httpError.BadRequest(`Unexpected content type: ${event.headers['Content-Type']}`);
   }
 
   if ('h' in event.body) {
@@ -92,6 +94,8 @@ function handleJsonRequest(body: any): MicropubInput {
   } else if (body.action === 'delete') {
     return body as MicropubDeleteInput;
   }
+
+  throw new httpError.BadRequest('Could not understand Micropub JSON request');
 }
 
 function singularize(input: MicropubCreateInput, keys: string[]) {

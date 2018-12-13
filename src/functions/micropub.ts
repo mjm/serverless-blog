@@ -1,11 +1,12 @@
 import { CustomAuthorizerHandler } from "aws-lambda";
+import * as httpError from "http-errors";
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import Post from "../model/post";
-import { authorizer, formDataParser } from "../middlewares";
+import { authorizer, errorHandler, formDataParser } from "../middlewares";
 import * as scope from "../util/scope";
 
 export const get = middy(async (event, context) => {
@@ -30,18 +31,13 @@ export const get = middy(async (event, context) => {
       statusCode: 200,
       body: JSON.stringify(result)
     };
-  } else {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "invalid_request",
-        error_description: `Unrecognized Micropub query '${q}'`
-      })
-    };
   }
+
+  throw new httpError.BadRequest(`Unrecognized Micropub query '${q}'`);
 });
 
 get
+  .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
   .use(authorizer());
@@ -51,11 +47,7 @@ export const post = middy(async (event, context) => {
 
   const input = await mp.input.fromEvent(event);
 
-  // check if the auth token has the matching scope for the action
-  const scopeCheck = scope.check(event, input.action);
-  if (scopeCheck) {
-    return scopeCheck;
-  }
+  scope.check(event, input.action);
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
@@ -82,15 +74,13 @@ export const post = middy(async (event, context) => {
       statusCode: 204,
       body: ""
     };
-  } else {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({error: 'invalid_request'})
-    };
   }
+
+  throw new httpError.BadRequest('Could not understand Micropub request');
 });
 
 post
+  .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
   .use(authorizer())
