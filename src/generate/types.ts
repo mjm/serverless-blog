@@ -14,7 +14,6 @@ export interface DecoratedPost {
 export interface DecoratedPage {
   path: string;
   name: string;
-  content: string;
-  renderedContent: runtime.SafeString;
+  content: runtime.SafeString;
   permalink: string;
 }

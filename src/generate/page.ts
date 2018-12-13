@@ -6,7 +6,7 @@ import embedTweets from "./embedTweets";
 import publish from "./publish";
 import * as renderer from "./renderer";
 import { Config } from "../model/site";
-import { Page, permalink } from "../model/page";
+import Page from "../model/page";
 
 export default async function generate(site: Config, page: Page): Promise<void> {
   const p = await decorate(page);
@@ -34,9 +34,8 @@ export async function decorate(pageOrArray: Page | Page[]): Promise<DecoratedPag
     return {
       path: p.path,
       name: p.name,
-      content: p.content,
-      renderedContent: new runtime.SafeString(marked(p.content)),
-      permalink: permalink(p)
+      content: new runtime.SafeString(marked(p.content)),
+      permalink: p.permalink
     };
   }
 }

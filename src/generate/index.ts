@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import * as SQS from 'aws-sdk/clients/sqs';
 
 import { archive } from "../model/cache";
-import * as page from "../model/page";
+import Page from "../model/page";
 import Post from "../model/post";
 import * as site from "../model/site";
 import { queue, generateQueueUrl as queueUrl } from "../model/queue";
@@ -61,12 +61,12 @@ async function planRequests(site: site.Config, options: GenerateSiteOptions): Pr
     }
   }
 
-  let pages: page.Page[] = [];
+  let pages: Page[] = [];
   if (options.pages) {
     if (options.pages === 'all') {
-      pages = await page.all(site.blogId);
+      pages = await Page.all(site.blogId);
     } else {
-      pages = await Promise.all(options.pages.map(path => page.get(site.blogId, path)));
+      pages = await Promise.all(options.pages.map(path => Page.get(site.blogId, path)));
     }
   }
 

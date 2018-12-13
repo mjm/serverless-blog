@@ -5,7 +5,7 @@ import * as mw from "middy/middlewares";
 import { errorHandler } from "../middlewares";
 import * as site from "../model/site";
 import Post, { PostData } from "../model/post";
-import { Page } from "../model/page";
+import Page, { PageData } from "../model/page";
 import * as generate from "../generate";
 import generateSite, { GenerateSiteOptions } from "../generate";
 import sendPings from "../generate/ping";
@@ -58,7 +58,7 @@ interface GeneratePostEvent extends GenerateEvent {
 }
 
 interface GeneratePageEvent extends GenerateEvent {
-  page: Page;
+  page: PageData;
 }
 
 interface GenerateArchiveEvent extends GenerateEvent {
@@ -77,7 +77,8 @@ const eventHandlers = {
   },
 
   async generatePage(e: GeneratePageEvent): Promise<void> {
-    await generate.page(e.site, e.page);
+    const page = new Page(e.page);
+    await generate.page(e.site, page);
   },
 
   async generateArchiveIndex(e: GenerateIndexEvent): Promise<void> {
