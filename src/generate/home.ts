@@ -30,7 +30,7 @@ async function generateFeeds(site: Config, posts: DecoratedPost[]): Promise<void
   const r = renderer.get(site);
 
   console.log('generating site feed');
-  const feed = generateFeed(site, posts);
+  const feed = await generateFeed(site, posts);
 
   const json = publish(site, 'feed.json', fixJSONFeed(feed.json1()));
   const atom = publish(site, 'feed.atom', feed.atom1());

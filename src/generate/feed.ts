@@ -1,37 +1,41 @@
 import { Feed } from "feed";
 
-import * as site from "../model/site";
+import { Config } from "../model/site";
 import { DecoratedPost } from "./types";
+import * as renderer from "./renderer";
 
-export function generateFeed(siteConfig: site.Config, posts: DecoratedPost[]): Feed {
-  const siteUrl = `https://${siteConfig.blogId}/`
+export async function generateFeed(site: Config, posts: DecoratedPost[]): Promise<Feed> {
+  const r = renderer.get(site);
+  const siteUrl = `https://${site.blogId}/`
   let feed = new Feed({
     id: siteUrl,
     link: siteUrl,
-    title: siteConfig.title,
-    copyright: `2018 ${siteConfig.author.name}`,
+    title: site.title,
+    copyright: `2018 ${site.author.name}`,
     feed: `${siteUrl}feed.atom`,
     feedLinks: {
       json: `${siteUrl}feed.json`
     },
     author: {
-      name: siteConfig.author.name,
-      email: siteConfig.author.email,
+      name: site.author.name,
+      email: site.author.email,
       link: siteUrl
     }
   });
 
-  posts.forEach(p => {
+  for (const p of posts) {
+    const content = await r(`${p.type}Feed.html`, { site, post: p });
     const url = `${siteUrl}${p.permalink.substring(1)}`;
+
     feed.addItem({
       title: p.name,
       link: url,
       id: url,
       date: p.published,
       published: p.published,
-      content: postContent(p)
+      content: content
     });
-  });
+  }
 
   return feed;
 }
@@ -47,18 +51,4 @@ export function fixJSONFeed(json: string): string {
   });
 
   return JSON.stringify(parsed);
-}
-
-function postContent(p: DecoratedPost): string {
-  let content = p.content.toString();
-
-  if (p.photo) {
-    for (const photo of p.photo) {
-      content += `
-      <figure><img src="${photo}"></figure>
-      `;
-    }
-  }
-
-  return content;
 }
