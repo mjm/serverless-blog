@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import * as middy from "middy";
+import middy from "middy";
 import * as mw from "middy/middlewares";
 
 import { errorHandler } from "../middlewares";

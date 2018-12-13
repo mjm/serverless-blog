@@ -1,6 +1,6 @@
 import { CustomAuthorizerHandler } from "aws-lambda";
 import * as httpError from "http-errors";
-import * as middy from "middy";
+import middy from "middy";
 import * as mw from "middy/middlewares";
 import fetch from "node-fetch";
 

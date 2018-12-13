@@ -1,7 +1,7 @@
 import * as path from "path";
 
 import * as mime from "mime-types";
-import * as S3 from "aws-sdk/clients/s3";
+import S3 from "aws-sdk/clients/s3";
 
 import { Config } from "../model/site";
 

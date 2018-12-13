@@ -1,11 +1,11 @@
 import { APIGatewayProxyResult } from "aws-lambda";
-import * as httpError from "http-errors";
+import httpError from "http-errors";
 
 export default class ScopeBag {
   private scopes: string[];
 
   constructor(scope: string) {
-    this.scopes = (scope || '').split(' ');
+    this.scopes = (scope || '').split(' ').filter(s => s != '');
   }
 
   require(...scopes: string[]): void {

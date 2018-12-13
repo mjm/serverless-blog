@@ -1,4 +1,4 @@
-import * as DynamoDB from "aws-sdk/clients/dynamodb";
+import DynamoDB from "aws-sdk/clients/dynamodb";
 import { format } from "date-fns";
 
 import { tableName } from "./db";

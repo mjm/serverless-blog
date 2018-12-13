@@ -1,5 +1,5 @@
 import { runtime } from "nunjucks";
-import * as marked from "marked";
+import marked from "marked";
 
 import { DecoratedPage } from "./types";
 import embedTweets from "./embedTweets";

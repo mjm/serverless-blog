@@ -1,4 +1,4 @@
-import * as S3 from "aws-sdk/clients/s3";
+import S3 from "aws-sdk/clients/s3";
 import { format } from "date-fns";
 import * as mime from "mime-types";
 import uuid from "uuid/v4";
