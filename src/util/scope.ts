@@ -1,27 +1,32 @@
 import { APIGatewayProxyResult } from "aws-lambda";
 import * as httpError from "http-errors";
 
-export function check(event, scopes: string | string[]): void {
-  const eventScopes = event.scopes;
-  const checkScopes = (typeof scopes === 'string') ? [ scopes ] : scopes;
+export default class ScopeBag {
+  private scopes: string[];
 
-  console.log('checking scopes, need:', checkScopes, 'have:', eventScopes);
+  constructor(scope: string) {
+    this.scopes = (scope || '').split(' ');
+  }
 
-  for (const s of checkScopes) {
-    if (eventScopes.includes(s)) {
-      // null means the request should continue
-      return null;
+  require(...scopes: string[]): void {
+    for (const s of scopes) {
+      if (this.scopes.includes(s)) {
+        console.log(`Current request has ${s} scope, allowing.`);
+        return;
+      }
     }
+
+    this.throwError(scopes);
   }
 
-  console.log('scope check failed');
+  private throwError(scopes: string[]): void {
+    let scopeText: string;
+    if (scopes.length > 1) {
+      scopeText = 'one of: ' + scopes.join(', ');
+    } else {
+      scopeText = scopes[0];
+    }
 
-  let scopeText: string;
-  if (checkScopes.length > 1) {
-    scopeText = 'one of: ' + checkScopes.join(', ');
-  } else {
-    scopeText = checkScopes[0];
+    throw httpError(401, `Missing required scope: ${scopeText}. Your token has scopes: ${this.scopes.join(', ')}.`, { code: 'insufficient_scope' });
   }
-
-  throw httpError(401, `Missing required scope: ${scopeText}. Your token has scopes: ${eventScopes.join(', ')}.`, { code: 'insufficient_scope' });
 }

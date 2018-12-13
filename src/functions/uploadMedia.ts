@@ -2,14 +2,12 @@ import * as httpError from "http-errors";
 import * as middy from "middy";
 import * as mw from "middy/middlewares";
 
-import * as scope from "../util/scope";
 import Uploader from "../micropub/upload";
 import { authorizer, errorHandler, formDataParser } from "../middlewares";
 
 export const handle = middy(async (event, context) => {
   console.log('got micropub request for', event.blogId);
-
-  scope.check(event, ['create', 'media']);
+  event.scopes.require('create', 'media');
 
   const urls = await upload(event);
 

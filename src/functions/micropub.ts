@@ -7,7 +7,6 @@ import fetch from "node-fetch";
 import * as mp from "../micropub";
 import Post from "../model/post";
 import { authorizer, errorHandler, formDataParser } from "../middlewares";
-import * as scope from "../util/scope";
 
 export const get = middy(async (event, context) => {
   console.log('got micropub request for', event.blogId);
@@ -46,8 +45,7 @@ export const post = middy(async (event, context) => {
   console.log('got micropub request for', event.blogId);
 
   const input = await mp.input.fromEvent(event);
-
-  scope.check(event, input.action);
+  event.scopes.require(input.action);
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
