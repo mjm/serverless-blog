@@ -11,6 +11,7 @@
     "date-fns": "^1.29.0",
     "feed": "^2.0.1",
     "http-errors": "^1.7.1",
+    "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.11",
     "marked": "^0.5.2",
     "middy": "^0.19.4",
