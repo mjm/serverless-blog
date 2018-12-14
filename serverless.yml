@@ -46,6 +46,7 @@ provider:
       - s3:Get*
     Resource: "arn:aws:s3:::*"
   environment:
+    JWT_SECRET: ${env:JWT_SECRET}
     DYNAMODB_TABLE: ${self:custom.tableName}
     GENERATE_QUEUE_URL:
       Ref: generateQueue

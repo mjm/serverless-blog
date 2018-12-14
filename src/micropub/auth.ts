@@ -23,3 +23,13 @@ export function createToken(me: string, scope: string): string {
     jwtid: uuid()
   });
 }
+
+export function verifyToken(token: string): TokenDetails {
+  const { sub, scope } = jwt.verify(token, tokenSecret);
+  return { me: sub, scope };
+}
+
+interface TokenDetails {
+  me: string;
+  scope: string;
+}

@@ -85,22 +85,21 @@ post
   .use(mw.jsonBodyParser())
   .use(formDataParser());
 
-const tokensUrl = 'https://tokens.indieauth.com/token';
-
 export const verify: CustomAuthorizerHandler = async (event, context) => {
-  const token = event.authorizationToken;
+  let token = event.authorizationToken;
   const methodArn = event.methodArn;
 
-  // pass the authorization header right on through to the tokens API
-  const response = await fetch(tokensUrl, {
-    headers: {
-      Authorization: token,
-      Accept: 'application/json'
-    }
-  });
+  console.log('Got auth token', token);
 
-  if (response.ok) {
-    const { me, scope } = await response.json();
+  try {
+    if (!token.startsWith('Bearer ')) {
+      throw new Error('Token header is not prefixed with "Bearer "');
+    }
+
+    // Strip Bearer prefix
+    token = token.substring(7);
+
+    const { me, scope } = mp.auth.verifyToken(token);
     console.log('allowing access for', me, 'with scopes:', scope);
 
     return {
@@ -110,8 +109,8 @@ export const verify: CustomAuthorizerHandler = async (event, context) => {
       },
       policyDocument: mp.auth.createPolicy(true, methodArn)
     };
-  } else {
-    console.log('could not verify token', response);
+  } catch (err) {
+    console.error('could not verify token', err);
     return {
       principalId: 'unknown',
       policyDocument: mp.auth.createPolicy(false, methodArn)

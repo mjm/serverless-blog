@@ -6,11 +6,10 @@ import * as site from "../model/site";
 export { format as dateformat };
 
 export function micropubLinks(siteConfig: site.Config): runtime.SafeString {
-  // TODO take the query string out of the Micropub URL
   return safe(`
     <link rel="authorization_endpoint" href="https://indieauth.com/auth">
-    <link rel="token_endpoint" href="https://tokens.indieauth.com/token">
-    <link rel="micropub" href="https://blog-api.mattmoriarity.com/micropub?site=${siteConfig.blogId}">
+    <link rel="token_endpoint" href="https://blog-api.mattmoriarity.com/token">
+    <link rel="micropub" href="https://blog-api.mattmoriarity.com/micropub">
   `);
 }
 
