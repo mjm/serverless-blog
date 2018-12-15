@@ -81,6 +81,13 @@ functions:
             Fn::GetAtt:
               - generateQueue
               - Arn
+  micropub-discover:
+    handler: src/functions/discover.handle
+    events:
+      - http:
+          method: post
+          path: discover
+          cors: true
   micropub-get:
     handler: src/functions/micropub.get
     events:
