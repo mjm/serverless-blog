@@ -54,7 +54,8 @@ export const post = middy(async (event, context) => {
     return {
       statusCode: 201,
       headers: {
-        Location: loc
+        Location: loc,
+        'Access-Control-Expose-Headers': 'Location'
       },
       body: ""
     };
