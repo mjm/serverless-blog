@@ -9,7 +9,9 @@ export default async function source(url: string): Promise<MicropubSource> {
   const post = await Post.getByURL(url);
   let result = {
     type: [ `h-${post.type}` ],
-    properties: {}
+    properties: {
+      url: [ `https://${post.blogId}${post.permalink}` ]
+    }
   };
 
   for (let key of post.properties) {
