@@ -85,7 +85,7 @@ async function planRequests(site: site.Config, options: GenerateSiteOptions): Pr
   });
 
   pages.forEach((p, i) => {
-    addEvent('generatePage', `page-${i}`, { page: p });
+    addEvent('generatePage', `page-${i}`, { page: p.data });
   });
 
   if (options.archives && options.archives.length > 0) {

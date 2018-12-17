@@ -67,25 +67,30 @@ interface GenerateArchiveEvent extends GenerateEvent {
 
 const eventHandlers = {
   async generateIndex(e: GenerateIndexEvent): Promise<void> {
+    console.log('generating index for site', e.site.blogId);
     await generate.index(e.site);
     await sendPings(e.site);
   },
 
   async generatePost(e: GeneratePostEvent): Promise<void> {
     const post = new Post(e.post);
+    console.log('generating post for site', e.site.blogId, 'path', post.path);
     await generate.post(e.site, post);
   },
 
   async generatePage(e: GeneratePageEvent): Promise<void> {
     const page = new Page(e.page);
+    console.log('generating page for site', e.site.blogId, 'path', page.path);
     await generate.page(e.site, page);
   },
 
   async generateArchiveIndex(e: GenerateIndexEvent): Promise<void> {
+    console.log('generating archive index for site', e.site.blogId);
     await generate.archiveIndex(e.site);
   },
 
   async generateArchiveMonth(e: GenerateArchiveEvent): Promise<void> {
+    console.log('generating archive for site', e.site.blogId, 'month', e.month);
     await generate.archiveMonth(e.site, e.month);
   }
 };
