@@ -166,6 +166,15 @@ resources:
           StreamViewType: NEW_IMAGE
     generateQueue:
       Type: AWS::SQS::Queue
+      Properties:
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - deadLetterQueue
+              - Arn
+          maxReceiveCount: 10
+    deadLetterQueue:
+      Type: AWS::SQS::Queue
       Properties: {}
     GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
