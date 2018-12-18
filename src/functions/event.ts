@@ -34,7 +34,9 @@ function collectRecords(event: DynamoDBStreamEvent): Map<string, any> {
       records.set(blogId, rs);
     }
 
-    rs.push(Converter.unmarshall(r.dynamodb.NewImage));
+    if (r.dynamodb.NewImage) {
+      rs.push(Converter.unmarshall(r.dynamodb.NewImage));
+    }
   }
 
   return records;
@@ -56,6 +58,7 @@ function planRequests(site: site.Config, records: any[]): SQS.SendMessageBatchRe
 
   let archiveMonths = new Set<string>();
   records.forEach((r, i) => {
+    console.log('got record', r);
     if (r.path.startsWith('posts/')) {
       includeIndex = true;
 
