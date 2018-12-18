@@ -142,6 +142,17 @@ functions:
             type: TOKEN
             name: micropub-verify
             identitySource: method.request.header.Authorization
+  get-page:
+    handler: src/functions/page.get
+    events:
+      - http:
+          method: get
+          path: pages/{path+}
+          cors: true
+          authorizer:
+            type: TOKEN
+            name: micropub-verify
+            identitySource: method.request.header.Authorization
 
 resources:
   Resources:

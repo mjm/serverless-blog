@@ -19,3 +19,21 @@ all
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer());
+
+export const get = middy(async (event, context) => {
+  const path = decodeURIComponent(event.pathParameters.path);
+  const page = await Page.get(event.blogId, path);
+  if (!page) {
+    throw new httpError.NotFound(`No page found with path '${path}'`);
+  }
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify(page.data)
+  }
+});
+
+get
+  .use(errorHandler())
+  .use(mw.cors())
+  .use(authorizer());

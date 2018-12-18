@@ -58,6 +58,10 @@ export default class Page {
     };
 
     const result = await db.get(query).promise();
-    return new Page(result.Item as PageData);
+    if (result.Item) {
+      return new Page(result.Item as PageData);
+    } else {
+      return null;
+    }
   }
 }
