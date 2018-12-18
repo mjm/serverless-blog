@@ -131,6 +131,17 @@ functions:
           method: post
           path: token
           cors: true
+  all-pages:
+    handler: src/functions/page.all
+    events:
+      - http:
+          method: get
+          path: pages
+          cors: true
+          authorizer:
+            type: TOKEN
+            name: micropub-verify
+            identitySource: method.request.header.Authorization
 
 resources:
   Resources:
