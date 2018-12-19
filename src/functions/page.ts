@@ -8,10 +8,9 @@ import { authorizer, errorHandler } from "../middlewares";
 export const all = middy(async (event, context) => {
   const pages = await Page.all(event.blogId);
 
-  const data = pages.map(p => p.data);
   return {
     statusCode: 200,
-    body: JSON.stringify(data)
+    body: JSON.stringify(pages)
   };
 });
 
@@ -29,7 +28,7 @@ export const get = middy(async (event, context) => {
 
   return {
     statusCode: 200,
-    body: JSON.stringify(page.data)
+    body: JSON.stringify(page)
   }
 });
 

@@ -79,7 +79,7 @@ const eventHandlers = {
   },
 
   async generatePage(e: GeneratePageEvent): Promise<void> {
-    const page = new Page(e.page);
+    const page = Page.make(e.page);
     console.log('generating page for site', e.site.blogId, 'path', page.path);
     await generate.page(e.site, page);
   },

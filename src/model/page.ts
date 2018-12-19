@@ -9,22 +9,18 @@ export interface PageData {
   content: string;
 }
 
-export default class Page {
-  data: PageData;
-
-  constructor(data: PageData) {
-    this.data = data;
-  }
-
-  get blogId(): string { return this.data.blogId; }
-  get path(): string { return this.data.path; }
-  get name(): string { return this.data.name; }
-  set name(newName: string) { this.data.name = newName; }
-  get content(): string { return this.data.content; }
-  set content(newContent: string) { this.data.content = newContent; }
+export default class Page implements PageData {
+  blogId: string;
+  path: string;
+  name: string;
+  content: string;
 
   get permalink(): string {
     return '/' + this.path.replace(/^pages\//, '') + '/';
+  }
+
+  static make(obj: PageData): Page {
+    return Object.create(Page.prototype, Object.getOwnPropertyDescriptors(obj));
   }
 
   static async all(blogId: string): Promise<Page[]> {
@@ -43,7 +39,7 @@ export default class Page {
 
     console.log('all pages consumed capacity', result.ConsumedCapacity);
 
-    return result.Items.map((i: PageData) => new Page(i));
+    return result.Items.map((i: PageData) => Page.make(i));
   }
 
   static async get(blogId: string, path: string): Promise<Page> {
@@ -61,17 +57,17 @@ export default class Page {
 
     const result = await db.get(query).promise();
     if (result.Item) {
-      return new Page(result.Item as PageData);
+      return Page.make(result.Item as PageData);
     } else {
       return null;
     }
   }
 
   async save(): Promise<void> {
-    console.log('saving page:', this.data);
+    console.log('saving page:', this);
     await db.put({
       TableName: tableName,
-      Item: this.data
+      Item: this
     }).promise();
   }
 }
