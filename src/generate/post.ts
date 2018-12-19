@@ -46,7 +46,7 @@ export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPos
       path: p.path,
       name: p.name,
       content: new runtime.SafeString(rendered),
-      published: p.published,
+      published: p.publishedDate,
       photo: p.photo,
       syndication: p.syndication,
       permalink: p.permalink

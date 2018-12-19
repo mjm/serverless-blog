@@ -15,7 +15,7 @@ export default async function source(url: string): Promise<MicropubSource> {
   };
 
   for (let key of post.properties) {
-    const val = post.get(key);
+    const val = post[key];
     if (val.constructor === Array) {
       result.properties[key] = val;
     } else {

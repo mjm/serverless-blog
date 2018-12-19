@@ -1,7 +1,7 @@
 import { URL } from "url";
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
-import { format, parse, startOfMonth, endOfMonth } from "date-fns";
+import { format, parse } from "date-fns";
 import * as rs from "randomstring";
 
 import { db, tableName } from "./db";
@@ -31,50 +31,34 @@ export interface PostData {
   [propName: string]: any;
 }
 
-const singularKeys = [
-  'name',
-  'content',
-  'published',
-  'updated',
-  'post-status',
-  'mp-slug'
-]
+export default class Post implements PostData {
+  blogId: string;
+  path?: string;
+  type: string;
+  name?: string;
+  content: PostContent;
+  published?: string;
+  updated?: string;
 
-export default class Post {
-  data: PostData;
+  status?: PostStatus;
+  slug?: string;
 
-  constructor(data: PostData) {
-    this.data = data;
-  }
+  [propName: string]: any;
 
-  get blogId(): string { return this.data.blogId; }
-  get path(): string { return this.data.path; }
-  get type(): string { return this.data.type; }
-  get name(): string { return this.data.name; }
-  get content(): PostContent { return this.data.content; }
-  get photo(): string[] { return this.data.photo; }
-  get syndication(): string[] { return this.data.syndication; }
-
-  get published(): Date { return this.getDate('published'); }
-  get updated(): Date { return this.getDate('updated'); }
+  get publishedDate(): Date { return this.getDate('published'); }
+  get updatedDate(): Date { return this.getDate('updated'); }
 
   get properties(): string[] {
-    return Object.keys(this.data).filter(k => {
-      return k !== 'type' && k !== 'blogId' && k !== 'path';
-    });
-  }
-
-  get(key: string): any {
-    return this.data[key];
+    return Object.keys(this).filter(k => !Post.nonPropertyKeys.includes(k));
   }
 
   set(key: string, value: any) {
     if (value === null || value === undefined) {
-      delete this.data[key];
-    } else if (singularKeys.includes(key) && value.constructor === Array) {
-      this.data[key] = value[0];
+      delete this[key];
+    } else if (Post.singularKeys.includes(key) && value.constructor === Array) {
+      this[key] = value[0];
     } else {
-      this.data[key] = value;
+      this[key] = value;
     }
   }
 
@@ -82,16 +66,35 @@ export default class Post {
     return '/' + this.path.replace(/^posts\//, '') + '/';
   }
 
+  get url(): string {
+    return `https://${this.blogId}${this.permalink}`;
+  }
+
   getDate(prop: string): Date {
-    if (prop in this.data) {
-      return parse(this.data[prop]);
+    if (prop in this) {
+      return parse(this[prop]);
     } else {
       return null;
     }
   }
 
-  static get singularKeys(): string[] {
-    return singularKeys;
+  static readonly singularKeys: string[] = [
+    'name',
+    'content',
+    'published',
+    'updated',
+    'post-status',
+    'mp-slug'
+  ]
+
+  static readonly nonPropertyKeys: string[] = [
+    'blogId',
+    'path',
+    'type'
+  ];
+
+  static make(obj: PostData): Post {
+    return Object.create(Post.prototype, Object.getOwnPropertyDescriptors(obj));
   }
 
   static async all(blogId: string): Promise<Post[]> {
@@ -140,7 +143,7 @@ export default class Post {
 
     console.log(`listing ${result.Items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
 
-    return result.Items.map((i: PostData) => new Post(i));
+    return result.Items.map((i: PostData) => Post.make(i));
   }
 
   static async create(data: PostData): Promise<Post> {
@@ -158,12 +161,12 @@ export default class Post {
       data.path = `posts/${data.path}`;
     }
 
-    // Don't persist the post status, it is represented by publishedAt
+    // Don't persist the post status, it is represented by published
     delete data.status;
     // Don't persist the slug, it should be incorporated into the path
     delete data.slug;
 
-    const post = new Post(data);
+    const post = Post.make(data);
     await post.save();
 
     return post;
@@ -183,7 +186,7 @@ export default class Post {
     };
 
     const result = await db.get(query).promise();
-    return new Post(result.Item as PostData);
+    return Post.make(result.Item as PostData);
   }
 
   static async getByURL(url: string): Promise<Post> {
@@ -192,13 +195,13 @@ export default class Post {
   }
 
   async save(): Promise<void> {
-    console.log('saving post:', this.data);
+    console.log('saving post:', this);
     await db.put({
       TableName: tableName,
-      Item: this.data
+      Item: this
     }).promise();
 
-    await archive.addDate(this.blogId, this.published);
+    await archive.addDate(this.blogId, this.publishedDate);
   }
 
   static async deleteByURL(blogId: string, url: string): Promise<void> {

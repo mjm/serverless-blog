@@ -73,7 +73,7 @@ const eventHandlers = {
   },
 
   async generatePost(e: GeneratePostEvent): Promise<void> {
-    const post = new Post(e.post);
+    const post = Post.make(e.post);
     console.log('generating post for site', e.site.blogId, 'path', post.path);
     await generate.post(e.site, post);
   },
