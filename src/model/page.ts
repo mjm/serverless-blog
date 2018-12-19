@@ -19,7 +19,9 @@ export default class Page {
   get blogId(): string { return this.data.blogId; }
   get path(): string { return this.data.path; }
   get name(): string { return this.data.name; }
+  set name(newName: string) { this.data.name = newName; }
   get content(): string { return this.data.content; }
+  set content(newContent: string) { this.data.content = newContent; }
 
   get permalink(): string {
     return '/' + this.path.replace(/^pages\//, '') + '/';
@@ -63,5 +65,13 @@ export default class Page {
     } else {
       return null;
     }
+  }
+
+  async save(): Promise<void> {
+    console.log('saving page:', this.data);
+    await db.put({
+      TableName: tableName,
+      Item: this.data
+    }).promise();
   }
 }

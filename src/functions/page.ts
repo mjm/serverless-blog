@@ -37,3 +37,27 @@ get
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer());
+
+export const update = middy(async (event, context) => {
+  const path = decodeURIComponent(event.pathParameters.path);
+  const page = await Page.get(event.blogId, path);
+  if (!page) {
+    throw new httpError.NotFound(`No page found with path '${path}'`);
+  }
+
+  page.name = event.body.name;
+  page.content = event.body.content;
+
+  await page.save();
+
+  return {
+    statusCode: 204,
+    body: ""
+  };
+});
+
+update
+  .use(errorHandler())
+  .use(mw.cors())
+  .use(authorizer())
+  .use(mw.jsonBodyParser());

@@ -95,7 +95,7 @@ functions:
           method: get
           path: micropub
           cors: true
-          authorizer:
+          authorizer: &authorizer
             type: TOKEN
             name: micropub-verify
             identitySource: method.request.header.Authorization
@@ -106,10 +106,7 @@ functions:
           method: post
           path: micropub
           cors: true
-          authorizer:
-            type: TOKEN
-            name: micropub-verify
-            identitySource: method.request.header.Authorization
+          authorizer: *authorizer
   micropub-verify:
     handler: src/functions/micropub.verify
   upload-media:
@@ -120,10 +117,7 @@ functions:
           path: micropub/media
           cors: true
           contentHandling: CONVERT_TO_BINARY
-          authorizer:
-            type: TOKEN
-            name: micropub-verify
-            identitySource: method.request.header.Authorization
+          authorizer: *authorizer
   create-token:
     handler: src/functions/token.create
     events:
@@ -138,10 +132,7 @@ functions:
           method: get
           path: pages
           cors: true
-          authorizer:
-            type: TOKEN
-            name: micropub-verify
-            identitySource: method.request.header.Authorization
+          authorizer: *authorizer
   get-page:
     handler: src/functions/page.get
     events:
@@ -149,10 +140,15 @@ functions:
           method: get
           path: pages/{path+}
           cors: true
-          authorizer:
-            type: TOKEN
-            name: micropub-verify
-            identitySource: method.request.header.Authorization
+          authorizer: *authorizer
+  update-page:
+    handler: src/functions/page.update
+    events:
+      - http:
+          method: PUT
+          path: pages/{path+}
+          cors: true
+          authorizer: *authorizer
 
 resources:
   Resources:
