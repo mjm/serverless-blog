@@ -14,7 +14,8 @@ export const handle = middy(async (event, context) => {
   return {
     statusCode: 201,
     headers: {
-      Location: urls[0]
+      Location: urls[0],
+      'Access-Control-Expose-Headers': 'Location'
     },
     body: ""
   }

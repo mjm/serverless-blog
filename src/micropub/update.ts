@@ -28,7 +28,7 @@ function handleReplace(post: Post, props: PropertyMap) {
 
 function handleAdd(post: Post, props: PropertyMap) {
   for (let key of Object.keys(props)) {
-    let current = post.get(key);
+    let current = post[key];
     if (!current) {
       post.set(key, props[key]);
     } else if (current.constructor === Array) {
@@ -40,11 +40,11 @@ function handleAdd(post: Post, props: PropertyMap) {
 function handleDelete(post: Post, props: string[] | PropertyMap) {
   if (props.constructor === Array) {
     for (let key of props as string[]) {
-      post.set(key, null);
+      delete post[key];
     }
   } else {
     for (let key of Object.keys(props)) {
-      let current = post.get(key);
+      let current = post[key];
       if (current.constructor === Array) {
         post.set(key, current.filter(v => !props[key].includes(v)));
       }
