@@ -38,14 +38,24 @@ get
   .use(authorizer());
 
 export const update = middy(async (event, context) => {
-  const path = decodeURIComponent(event.pathParameters.path);
-  const page = await Page.get(event.blogId, path);
-  if (!page) {
-    throw new httpError.NotFound(`No page found with path '${path}'`);
-  }
+  let path = decodeURIComponent(event.pathParameters.path);
+  let page = await Page.get(event.blogId, path);
 
-  page.name = event.body.name;
-  page.content = event.body.content;
+  if (page) {
+    page.name = event.body.name;
+    page.content = event.body.content;
+  } else {
+    if (!path.startsWith('pages/')) {
+      path = `pages/${path}`;
+    }
+
+    page = Page.make({
+      blogId: event.blogId,
+      path,
+      name: event.body.name,
+      content: event.body.content
+    });
+  }
 
   await page.save();
 
@@ -60,3 +70,18 @@ update
   .use(mw.cors())
   .use(authorizer())
   .use(mw.jsonBodyParser());
+
+export const remove = middy(async (event, context) => {
+  const path = decodeURIComponent(event.pathParameters.path);
+  await Page.deleteByPath(event.blogId, path);
+
+  return {
+    statusCode: 204,
+    body: ""
+  };
+});
+
+remove
+  .use(errorHandler())
+  .use(mw.cors())
+  .use(authorizer());

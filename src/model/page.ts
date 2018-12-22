@@ -70,4 +70,15 @@ export default class Page implements PageData {
       Item: this
     }).promise();
   }
+
+  static async deleteByPath(blogId: string, path: string): Promise<void> {
+    if (!path.startsWith('pages/')) {
+      path = `pages/${path}`;
+    }
+
+    await db.delete({
+      TableName: tableName,
+      Key: { blogId, path }
+    }).promise();
+  }
 }

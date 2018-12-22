@@ -149,6 +149,14 @@ functions:
           path: pages/{path+}
           cors: true
           authorizer: *authorizer
+  delete-page:
+    handler: src/functions/page.remove
+    events:
+      - http:
+          method: DELETE
+          path: pages/{path+}
+          cors: true
+          authorizer: *authorizer
 
 resources:
   Resources:
