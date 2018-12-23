@@ -2,6 +2,7 @@ import * as httpError from "http-errors";
 
 import Post from "../model/post";
 import Uploader from "../micropub/upload";
+import * as mf from "../util/microformats";
 
 export type MicropubInput = MicropubCreateInput | MicropubUpdateInput | MicropubDeleteInput;
 
@@ -78,17 +79,8 @@ function handleJsonRequest(body: any): MicropubInput {
   console.log('Got JSON for Micropub:', body);
   if ('type' in body) {
     console.log('Found type key in JSON, treating as a create');
-    const type = body.type[0].replace(/^h-/, '');
-    let input: MicropubCreateInput = {
-      action: "create",
-      ...body.properties,
-      type
-    };
-
-    // we only expect a single value for some
-    singularize(input, Post.singularKeys);
-
-    return input;
+    const item = mf.toStorage(body);
+    return { action: "create", ...item };
   } else if (body.action === 'update') {
     return body as MicropubUpdateInput;
   } else if (body.action === 'delete') {
@@ -96,12 +88,4 @@ function handleJsonRequest(body: any): MicropubInput {
   }
 
   throw new httpError.BadRequest('Could not understand Micropub JSON request');
-}
-
-function singularize(input: MicropubCreateInput, keys: string[]) {
-  for (let key of keys) {
-    if (key in input) {
-      input[key] = input[key][0];
-    }
-  }
 }

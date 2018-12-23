@@ -6,6 +6,8 @@ import * as rs from "randomstring";
 
 import { db, tableName } from "./db";
 import { archive } from "./cache";
+import Mention, { MentionData } from "./mention";
+import * as mf from "../util/microformats";
 
 type PostStatus = "draft" | "published";
 
@@ -63,11 +65,15 @@ export default class Post implements PostData {
   }
 
   get permalink(): string {
-    return '/' + this.path.replace(/^posts\//, '') + '/';
+    return '/' + this.shortPath + '/';
   }
 
   get url(): string {
     return `https://${this.blogId}${this.permalink}`;
+  }
+
+  get shortPath(): string {
+    return this.path.replace(/^posts\//, '');
   }
 
   getDate(prop: string): Date {
@@ -78,14 +84,9 @@ export default class Post implements PostData {
     }
   }
 
-  static readonly singularKeys: string[] = [
-    'name',
-    'content',
-    'published',
-    'updated',
-    'post-status',
-    'mp-slug'
-  ]
+  static get singularKeys(): string[] {
+    return mf.singularKeys;
+  }
 
   static readonly nonPropertyKeys: string[] = [
     'blogId',
@@ -186,7 +187,11 @@ export default class Post implements PostData {
     };
 
     const result = await db.get(query).promise();
-    return Post.make(result.Item as PostData);
+    if (result.Item) {
+      return Post.make(result.Item as PostData);
+    } else {
+      return null;
+    }
   }
 
   static async getByURL(url: string): Promise<Post> {
@@ -212,6 +217,10 @@ export default class Post implements PostData {
       TableName: tableName,
       Key: key
     }).promise();
+  }
+
+  async addMention(data: MentionData): Promise<Mention> {
+    return await Mention.create(this, data);
   }
 }
 
