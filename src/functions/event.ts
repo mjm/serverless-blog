@@ -4,6 +4,7 @@ import { Converter } from 'aws-sdk/clients/dynamodb';
 import * as SQS from 'aws-sdk/clients/sqs';
 
 import * as site from "../model/site";
+import Mention from "../model/mention";
 import { queue, generateQueueUrl as queueUrl } from "../model/queue";
 
 export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
@@ -20,6 +21,8 @@ export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
         Entries: rs
       }).promise();
     }
+
+    await processMentions(records);
   }
 };
 
@@ -84,4 +87,19 @@ function planRequests(site: site.Config, records: any[]): SQS.SendMessageBatchRe
   }
 
   return requests;
+}
+
+async function processMentions(records: any[]): Promise<void> {
+  for (let r of records) {
+    if (Mention.is(r)) {
+      const mention = Mention.make(r);
+      const post = await mention.getPost();
+      console.log('handling mention for post', post.path);
+
+      post.mentionCount = await post.getMentionCount();
+      console.log('updating post to have mention count', post.mentionCount);
+
+      await post.save();
+    }
+  }
 }

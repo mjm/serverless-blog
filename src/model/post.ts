@@ -6,7 +6,7 @@ import * as rs from "randomstring";
 
 import { db, tableName } from "./db";
 import { archive } from "./cache";
-import Mention, { MentionData } from "./mention";
+import Mention, { MentionItemData } from "./mention";
 import * as mf from "../util/microformats";
 
 type PostStatus = "draft" | "published";
@@ -26,6 +26,8 @@ export interface PostData {
   published?: string;
   updated?: string;
 
+  mentionCount?: number;
+
   // temporary attributes, don't persist
   status?: PostStatus;
   slug?: string;
@@ -41,6 +43,8 @@ export default class Post implements PostData {
   content: PostContent;
   published?: string;
   updated?: string;
+
+  mentionCount?: number;
 
   status?: PostStatus;
   slug?: string;
@@ -219,8 +223,16 @@ export default class Post implements PostData {
     }).promise();
   }
 
-  async addMention(data: MentionData): Promise<Mention> {
-    return await Mention.create(this, data);
+  async addMention(item: MentionItemData): Promise<Mention> {
+    return await Mention.create(this, { item });
+  }
+
+  async getMentions(): Promise<Mention[]> {
+    return await Mention.forPost(this);
+  }
+
+  async getMentionCount(): Promise<number> {
+    return await Mention.countForPost(this);
   }
 }
 
