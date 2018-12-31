@@ -9,6 +9,18 @@ export interface DecoratedPost {
   photo?: string[];
   syndication?: string[];
   permalink: string;
+  mentionCount?: number;
+}
+
+export type MentionKind = "reply" | "like" | "mention";
+
+export interface DecoratedMention {
+  type: string;
+  kind: MentionKind;
+  url: string;
+  content: string | runtime.SafeString;
+  published?: Date;
+  author?: any; // TODO maybe run this through a decorator
 }
 
 export interface DecoratedPage {

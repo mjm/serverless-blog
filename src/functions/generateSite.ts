@@ -75,7 +75,10 @@ const eventHandlers = {
   async generatePost(e: GeneratePostEvent): Promise<void> {
     const post = Post.make(e.post);
     console.log('generating post for site', e.site.blogId, 'path', post.path);
-    await generate.post(e.site, post);
+
+    const mentions = await post.getMentions();
+
+    await generate.post(e.site, post, mentions);
   },
 
   async generatePage(e: GeneratePageEvent): Promise<void> {

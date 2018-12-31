@@ -1,4 +1,5 @@
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
+import { parse } from "date-fns";
 import { db, tableName } from "./db";
 import Post from "./post";
 
@@ -20,7 +21,15 @@ export default class Mention implements MentionData {
   postPath: string;
   item: MentionItemData;
 
-  [propName: string]: any;
+  get publishedDate(): Date { return this.getDate('published'); }
+
+  getDate(prop: string): Date {
+    if (prop in this.item) {
+      return parse(this.item[prop]);
+    } else {
+      return null;
+    }
+  }
 
   static make(obj: MentionData): Mention {
     return Object.create(Mention.prototype, Object.getOwnPropertyDescriptors(obj));

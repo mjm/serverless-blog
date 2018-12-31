@@ -3,17 +3,20 @@ import marked from "marked";
 
 import { DecoratedPost } from "./types";
 import embedTweets from "./embedTweets";
+import { decorate as decorateMention } from "./mention";
 import publish from "./publish";
 import * as renderer from "./renderer";
 import { Config } from "../model/site";
 import Post from "../model/post";
+import Mention from "../model/mention";
 
-export default async function generate(site: Config, post: Post): Promise<void> {
+export default async function generate(site: Config, post: Post, mentions: Mention[]): Promise<void> {
   const p = await decorate(post);
+  const ms = decorateMention(mentions);
 
   const r = renderer.get(site);
   const template = `${p.type}.html`;
-  const body = await r(template, { site, post: p });
+  const body = await r(template, { site, post: p, mentions: ms });
 
   // transform /foo/bar/ to foo/bar/index.html
   const dest = `${p.permalink.substring(1)}index.html`;
@@ -49,7 +52,8 @@ export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPos
       published: p.publishedDate,
       photo: p.photo,
       syndication: p.syndication,
-      permalink: p.permalink
+      permalink: p.permalink,
+      mentionCount: p.mentionCount
     };
     return decorated;
   }
