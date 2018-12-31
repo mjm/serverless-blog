@@ -10,6 +10,7 @@ export function micropubLinks(siteConfig: site.Config): runtime.SafeString {
     <link rel="authorization_endpoint" href="https://indieauth.com/auth">
     <link rel="token_endpoint" href="https://blog-api.mattmoriarity.com/token">
     <link rel="micropub" href="https://blog-api.mattmoriarity.com/micropub">
+    <link rel="webmention" href="https://blog-api.mattmoriarity.com/webmention">
   `);
 }
 
