@@ -95,7 +95,8 @@ export default class Post implements PostData {
   static readonly nonPropertyKeys: string[] = [
     'blogId',
     'path',
-    'type'
+    'type',
+    'mentionCount'
   ];
 
   static make(obj: PostData): Post {
