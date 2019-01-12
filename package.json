@@ -42,7 +42,7 @@
     "ts-jest": "^23.10.5",
     "ts-loader": "^4.2.0",
     "typescript": "^2.9.2",
-    "webpack": "^4.5.0",
+    "webpack": "^4.28.4",
     "webpack-cli": "^3.1.2"
   },
   "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
