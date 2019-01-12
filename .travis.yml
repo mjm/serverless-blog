@@ -6,4 +6,4 @@ cache: npm
 
 script: 
   - npm run fix-memory-limit
-  - npm run deploy
+  - ./node_modules/.bin/serverless deploy
