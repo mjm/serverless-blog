@@ -52,6 +52,7 @@ interface GenerateEvent {
 }
 
 interface GenerateIndexEvent extends GenerateEvent {}
+interface GenerateErrorEvent extends GenerateEvent {}
 
 interface GeneratePostEvent extends GenerateEvent {
   post: PostData;
@@ -70,6 +71,11 @@ const eventHandlers = {
     console.log('generating index for site', e.site.blogId);
     await generate.index(e.site);
     await sendPings(e.site);
+  },
+
+  async generateError(e: GenerateErrorEvent): Promise<void> {
+    console.log('generating error page for site', e.site.blogId);
+    await generate.error(e.site);
   },
 
   async generatePost(e: GeneratePostEvent): Promise<void> {

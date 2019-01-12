@@ -10,11 +10,13 @@ import { queue, generateQueueUrl as queueUrl } from "../model/queue";
 // expose the individual generator functions
 export { generateIndex as archiveIndex, generateMonth as archiveMonth } from "./archive";
 export { default as index } from "./home";
+export { default as error } from "./error";
 export { default as page } from "./page";
 export { default as post } from "./post";
 
 export interface GenerateSiteOptions {
   index?: boolean;
+  error?: boolean;
   posts?: "all" | "recent" | string[];
   pages?: "all" | string[];
   archives?: "all" | string[];
@@ -78,6 +80,10 @@ async function planRequests(site: site.Config, options: GenerateSiteOptions): Pr
 
   if (options.index) {
     addEvent('generateIndex', 'index');
+  }
+
+  if (options.error) {
+    addEvent('generateError', 'error');
   }
 
   posts.forEach((p, i) => {
