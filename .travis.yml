@@ -5,5 +5,5 @@ node_js:
 cache: npm
 
 script: 
-  - npm install -g serverless
-  - sls deploy
+  - npm run fix-memory-limit
+  - npm run deploy
