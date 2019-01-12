@@ -5,5 +5,5 @@ node_js:
 cache: npm
 
 script: 
-# - npm run fix-memory-limit
-  - ./node_modules/.bin/serverless deploy
+  - npm test
+  - npm run deploy
