@@ -5,7 +5,7 @@ import { archive } from "../model/cache";
 import Page from "../model/page";
 import Post from "../model/post";
 import * as site from "../model/site";
-import { queue, generateQueueUrl as queueUrl } from "../model/queue";
+import { queue, queueUrl } from "../model/queue";
 
 // expose the individual generator functions
 export { generateIndex as archiveIndex, generateMonth as archiveMonth } from "./archive";

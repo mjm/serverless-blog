@@ -48,13 +48,8 @@ provider:
   environment:
     JWT_SECRET: ${env:JWT_SECRET}
     DYNAMODB_TABLE: ${self:custom.tableName}
-    GENERATE_QUEUE_URL:
-      Ref: generateQueue
-    WEBMENTION_QUEUE_URL:
-      Ref: webmentionQueue
-
-      # package:
-      #   individually: true
+    QUEUE_URL:
+      Ref: eventQueue
 
 functions:
   generate-site:
@@ -74,23 +69,14 @@ functions:
             Fn::GetAtt:
               - blogTable
               - StreamArn
-  generate-events:
-    handler: src/functions/generateSite.handleEvent
+  queue-events:
+    handler: src/functions/event.queueTrigger
     timeout: 120
     events:
       - sqs:
           arn:
             Fn::GetAtt:
-              - generateQueue
-              - Arn
-  webmention-events:
-    handler: src/functions/webmention.handleEvent
-    timeout: 30
-    events:
-      - sqs:
-          arn:
-            Fn::GetAtt:
-              - webmentionQueue
+              - eventQueue
               - Arn
   micropub-discover:
     handler: src/functions/discover.handle
@@ -208,7 +194,7 @@ resources:
         StreamSpecification:
           StreamViewType: NEW_IMAGE
 
-    generateQueue:
+    eventQueue:
       Type: AWS::SQS::Queue
       Properties:
         RedrivePolicy:
@@ -216,16 +202,8 @@ resources:
             Fn::GetAtt:
               - deadLetterQueue
               - Arn
-          maxReceiveCount: 10
-    webmentionQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        RedrivePolicy:
-          deadLetterTargetArn:
-            Fn::GetAtt:
-              - deadLetterQueue
-              - Arn
-          maxReceiveCount: 3
+          maxReceiveCount: 5
+
     deadLetterQueue:
       Type: AWS::SQS::Queue
       Properties: {}

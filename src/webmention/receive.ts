@@ -1,7 +1,7 @@
 import * as httpError from "http-errors";
 
 import Post, { PostData } from "../model/post";
-import { queue, webmentionQueueUrl as queueUrl } from "../model/queue";
+import { queue, queueUrl } from "../model/queue";
 import * as mf from "../util/microformats";
 
 export async function enqueue(source, target): Promise<void> {
@@ -24,7 +24,7 @@ export async function enqueue(source, target): Promise<void> {
     QueueUrl: queueUrl,
     MessageBody: JSON.stringify(message),
     MessageAttributes: {
-      eventType: { StringValue: 'receive', DataType: 'String' }
+      eventType: { StringValue: 'webmentionReceive', DataType: 'String' }
     }
   }).promise();
 }

@@ -4,8 +4,16 @@ import { Converter } from 'aws-sdk/clients/dynamodb';
 import * as SQS from 'aws-sdk/clients/sqs';
 
 import * as site from "../model/site";
+import Post, { PostData } from "../model/post";
+import Page, { PageData } from "../model/page";
 import Mention from "../model/mention";
-import { queue, generateQueueUrl as queueUrl } from "../model/queue";
+import { queue, queueUrl } from "../model/queue";
+
+import * as generate from "../generate";
+import sendPings from "../generate/ping";
+import * as renderer from "../generate/renderer";
+
+import * as receive from "../webmention/receive";
 
 export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
   const recordsByBlogId = collectRecords(event);
@@ -103,3 +111,76 @@ async function processMentions(records: any[]): Promise<void> {
     }
   }
 }
+
+export async function queueTrigger(event, context): Promise<void> {
+  renderer.invalidate();
+  await Promise.all(event.Records.map(handleMessage));
+}
+
+async function handleMessage(message): Promise<void> {
+  const { body, messageAttributes } = message;
+  const parsedBody = JSON.parse(body);
+  const eventType = messageAttributes.eventType.stringValue;
+
+  const fn = eventHandlers[eventType];
+  await fn(parsedBody);
+}
+
+interface GenerateEvent {
+  site: site.Config;
+}
+
+interface GenerateIndexEvent extends GenerateEvent {}
+interface GenerateErrorEvent extends GenerateEvent {}
+
+interface GeneratePostEvent extends GenerateEvent {
+  post: PostData;
+}
+
+interface GeneratePageEvent extends GenerateEvent {
+  page: PageData;
+}
+
+interface GenerateArchiveEvent extends GenerateEvent {
+  month: string;
+}
+
+const eventHandlers = {
+  async generateIndex(e: GenerateIndexEvent): Promise<void> {
+    console.log('generating index for site', e.site.blogId);
+    await generate.index(e.site);
+    await sendPings(e.site);
+  },
+
+  async generateError(e: GenerateErrorEvent): Promise<void> {
+    console.log('generating error page for site', e.site.blogId);
+    await generate.error(e.site);
+  },
+
+  async generatePost(e: GeneratePostEvent): Promise<void> {
+    const post = Post.make(e.post);
+    console.log('generating post for site', e.site.blogId, 'path', post.path);
+
+    const mentions = await post.getMentions();
+
+    await generate.post(e.site, post, mentions);
+  },
+
+  async generatePage(e: GeneratePageEvent): Promise<void> {
+    const page = Page.make(e.page);
+    console.log('generating page for site', e.site.blogId, 'path', page.path);
+    await generate.page(e.site, page);
+  },
+
+  async generateArchiveIndex(e: GenerateIndexEvent): Promise<void> {
+    console.log('generating archive index for site', e.site.blogId);
+    await generate.archiveIndex(e.site);
+  },
+
+  async generateArchiveMonth(e: GenerateArchiveEvent): Promise<void> {
+    console.log('generating archive for site', e.site.blogId, 'month', e.month);
+    await generate.archiveMonth(e.site, e.month);
+  },
+
+  webmentionReceive: receive.handleEvent
+};
