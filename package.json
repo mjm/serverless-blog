@@ -4,7 +4,7 @@
   "description": "Serverless webpack example using Typescript",
   "main": "handler.js",
   "scripts": {
-    "deploy": "serverless deploy",
+    "deploy": "serverless deploy --conceal",
     "test": "jest"
   },
   "dependencies": {
