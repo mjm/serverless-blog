@@ -197,6 +197,7 @@ resources:
     eventQueue:
       Type: AWS::SQS::Queue
       Properties:
+        VisibilityTimeout: 150
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
