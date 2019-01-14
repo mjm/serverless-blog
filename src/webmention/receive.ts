@@ -1,8 +1,13 @@
 import * as httpError from "http-errors";
+import SES from "aws-sdk/clients/ses";
 
 import Post, { PostData } from "../model/post";
+import Mention from "../model/mention";
 import { queue, queueUrl } from "../model/queue";
+import * as site from "../model/site";
 import * as mf from "../util/microformats";
+
+const ses = new SES();
 
 export async function enqueue(source, target): Promise<void> {
   if (!source) {
@@ -55,5 +60,47 @@ export async function handleEvent(body: ReceiveWebmentionMessage): Promise<void>
     item.url = source;
   }
 
-  await post.addMention(item);
+  const newMention = await post.addMention(item);
+  await notifyAuthor(post, newMention);
+}
+
+const fromAddress = 'mentions@mattmoriarity.com';
+
+async function notifyAuthor(post: Post, mention: Mention): Promise<void> {
+  const config = await site.getConfig(mention.blogId);
+  if (!config.author) {
+    return;
+  }
+
+  const toStr = `${config.author.name} <${config.author.email}>`;
+  const fromStr = `${config.blogId} <${fromAddress}>`;
+
+  let mentionAuthor = 'Someone';
+  if (mention.item.author && mention.item.author[0]) {
+    mentionAuthor = mention.item.author[0].name || mentionAuthor;
+  }
+
+  let postName = post.name;
+  if (!postName) {
+    if (typeof post.content === 'string') {
+      postName = post.content.slice(0, 50) + '...';
+    } else {
+      postName = 'Untitled';
+    }
+  }
+
+  const postUrl = post.url;
+
+  await ses.sendTemplatedEmail({
+    Source: fromStr,
+    Destination: {
+      ToAddresses: [ toStr ]
+    },
+    Template: 'newMention',
+    TemplateData: JSON.stringify({
+      mentionAuthor,
+      postName,
+      postUrl
+    })
+  }).promise();
 }

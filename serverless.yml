@@ -218,3 +218,15 @@ resources:
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: ApiGatewayRestApi
+
+    newMentionTemplate:
+      Type: AWS::SES::Template
+      Properties:
+        TemplateName: newMention
+        SubjectPart: {{mentionAuthor}} mentioned one of your posts
+        HtmlPart: |
+          <p>Your post <a href="{{postUrl}}">&quot;{{postName}}&quot;</a> has a new mention.</p>
+        TextPart: |
+          Your post "{{postName}}" has a new mention.
+
+            {{postUrl}}
