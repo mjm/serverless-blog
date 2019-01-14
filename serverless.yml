@@ -45,6 +45,10 @@ provider:
       - s3:Put*
       - s3:Get*
     Resource: "arn:aws:s3:::*"
+  - Effect: Allow
+    Action:
+      - ses:SendTemplatedEmail
+    Resource: "arn:aws:ses:us-east-1:*:*"
   environment:
     JWT_SECRET: ${env:JWT_SECRET}
     DYNAMODB_TABLE: ${self:custom.tableName}
