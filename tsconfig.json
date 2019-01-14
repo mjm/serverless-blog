@@ -3,9 +3,9 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es6",
+    "target": "ES2015",
     "lib": [
-      "esnext"
+      "ESNext"
     ],
     "moduleResolution": "node",
     "outDir": ".build"
