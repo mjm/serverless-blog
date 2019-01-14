@@ -223,7 +223,7 @@ resources:
       Type: AWS::SES::Template
       Properties:
         TemplateName: newMention
-        SubjectPart: {{mentionAuthor}} mentioned one of your posts
+        SubjectPart: "{{mentionAuthor}} mentioned one of your posts"
         HtmlPart: |
           <p>Your post <a href="{{postUrl}}">&quot;{{postName}}&quot;</a> has a new mention.</p>
         TextPart: |
