@@ -7,7 +7,7 @@ export default async function create(blogId: string, input: MicropubCreateInput)
     blogId,
     type: input.type,
     name: input.name || '',
-    content: input.content,
+    content: input.content || '',
     published: input.published
   };
 

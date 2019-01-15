@@ -27,8 +27,10 @@ export async function generateFeed(site: Config, posts: DecoratedPost[]): Promis
     const content = await r(`${p.type}Feed.html`, { site, post: p });
     const url = `${siteUrl}${p.permalink.substring(1)}`;
 
+    if (!p.published) { continue; }
+
     feed.addItem({
-      title: p.name,
+      title: p.name as any, // title should be optional but isn't
       link: url,
       id: url,
       date: p.published,

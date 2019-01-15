@@ -21,9 +21,9 @@ export default class Mention implements MentionData {
   postPath: string;
   item: MentionItemData;
 
-  get publishedDate(): Date { return this.getDate('published'); }
+  get publishedDate(): Date | null { return this.getDate('published'); }
 
-  getDate(prop: string): Date {
+  getDate(prop: string): Date | null {
     if (prop in this.item) {
       return parse(this.item[prop]);
     } else {
@@ -69,9 +69,10 @@ export default class Mention implements MentionData {
   static async forPost(post: Post): Promise<Mention[]> {
     const query = this.queryForPost(post);
     const result = await db.query(query).promise();
+    const items = result.Items || [];
 
     console.log('mentions for post consumed capacity', result.ConsumedCapacity);
-    return result.Items.map((i: MentionData) => Mention.make(i));
+    return items.map((i: MentionData) => Mention.make(i));
   }
 
   static async countForPost(post: Post): Promise<number> {
@@ -80,7 +81,7 @@ export default class Mention implements MentionData {
     const result = await db.query(query).promise();
 
     console.log('counting mentions for post consumed capacity', result.ConsumedCapacity);
-    return result.Count;
+    return result.Count || 0;
   }
 
   private static queryForPost(post: Post): DynamoDB.DocumentClient.QueryInput {

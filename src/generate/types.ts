@@ -5,7 +5,7 @@ export interface DecoratedPost {
   path: string;
   name?: string;
   content: runtime.SafeString;
-  published: Date;
+  published: Date | null;
   photo?: string[];
   syndication?: string[];
   permalink: string;
@@ -19,7 +19,7 @@ export interface DecoratedMention {
   kind: MentionKind;
   url: string;
   content: string | runtime.SafeString;
-  published?: Date;
+  published?: Date | null;
   author?: any; // TODO maybe run this through a decorator
 }
 

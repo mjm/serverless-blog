@@ -2,7 +2,7 @@ import { PolicyDocument } from "aws-lambda";
 import * as jwt from "jsonwebtoken";
 import uuid from "uuid/v4";
 
-const tokenSecret = Buffer.from(process.env.JWT_SECRET, 'base64');
+const tokenSecret = Buffer.from(process.env.JWT_SECRET || '', 'base64');
 
 export function createPolicy(allow: boolean, methodArn: string): PolicyDocument {
   return {

@@ -3,6 +3,7 @@ import * as DynamoDB from "aws-sdk/clients/dynamodb";
 import * as slug from "slug";
 import { format, parse } from "date-fns";
 import * as rs from "randomstring";
+import * as httpError from "http-errors";
 
 import { db, tableName } from "./db";
 import { archive } from "./cache";
@@ -51,8 +52,8 @@ export default class Post implements PostData {
 
   [propName: string]: any;
 
-  get publishedDate(): Date { return this.getDate('published'); }
-  get updatedDate(): Date { return this.getDate('updated'); }
+  get publishedDate(): Date | null { return this.getDate('published'); }
+  get updatedDate(): Date | null { return this.getDate('updated'); }
 
   get properties(): string[] {
     return Object.keys(this).filter(k => !Post.nonPropertyKeys.includes(k));
@@ -77,10 +78,10 @@ export default class Post implements PostData {
   }
 
   get shortPath(): string {
-    return this.path.replace(/^posts\//, '');
+    return (this.path || "").replace(/^posts\//, '');
   }
 
-  getDate(prop: string): Date {
+  getDate(prop: string): Date | null {
     if (prop in this) {
       return parse(this[prop]);
     } else {
@@ -125,13 +126,12 @@ export default class Post implements PostData {
   }
 
   static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
+    let values = { ":b": blogId };
     let query: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
       IndexName: 'published-posts',
       KeyConditionExpression: "blogId = :b",
-      ExpressionAttributeValues: {
-        ":b": blogId
-      },
+      ExpressionAttributeValues: values,
       ScanIndexForward: false,
       ReturnConsumedCapacity: "TOTAL"
     };
@@ -141,15 +141,16 @@ export default class Post implements PostData {
     }
     if (options.between) {
       query.KeyConditionExpression += " and (published between :start and :end)";
-      query.ExpressionAttributeValues[':start'] = options.between.start;
-      query.ExpressionAttributeValues[':end'] = options.between.end;
+      values[':start'] = options.between.start;
+      values[':end'] = options.between.end;
     }
 
     const result = await db.query(query).promise();
+    const items = result.Items || [];
 
-    console.log(`listing ${result.Items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
+    console.log(`listing ${items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
 
-    return result.Items.map((i: PostData) => Post.make(i));
+    return items.map((i: PostData) => Post.make(i));
   }
 
   static async create(data: PostData): Promise<Post> {
@@ -195,7 +196,7 @@ export default class Post implements PostData {
     if (result.Item) {
       return Post.make(result.Item as PostData);
     } else {
-      return null;
+      throw new httpError.NotFound(`Could not find a record at path '${path}'`);
     }
   }
 
@@ -211,7 +212,9 @@ export default class Post implements PostData {
       Item: this
     }).promise();
 
-    await archive.addDate(this.blogId, this.publishedDate);
+    if (this.publishedDate) {
+      await archive.addDate(this.blogId, this.publishedDate);
+    }
   }
 
   static async deleteByURL(blogId: string, url: string): Promise<void> {

@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "strictBindCallApply": true,
+    "strictNullChecks": true,
+
     "sourceMap": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

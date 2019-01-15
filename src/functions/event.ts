@@ -38,7 +38,16 @@ function collectRecords(event: DynamoDBStreamEvent): Map<string, any> {
   let records = new Map<string, any>();
 
   for (let r of event.Records) {
+    if (!r.dynamodb || !r.dynamodb.Keys) {
+      continue;
+    }
+
     const blogId = r.dynamodb.Keys.blogId.S;
+    if (!blogId) {
+      console.warn('No blogId key in event', r.dynamodb);
+      continue;
+    }
+
     let rs = records.get(blogId);
     if (!rs) {
       rs = [];

@@ -39,7 +39,11 @@ class ArchiveCache {
       }
     }).promise();
 
-    let months = result.Item.months.SS;
+    if (!result.Item) {
+      return [];
+    }
+
+    let months = result.Item.months.SS || [];
 
     // most recent months first
     months.sort((a, b) => {

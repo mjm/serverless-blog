@@ -46,7 +46,7 @@ export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPos
 
     let decorated: DecoratedPost = {
       type: p.type,
-      path: p.path,
+      path: p.path || '',
       name: p.name,
       content: new runtime.SafeString(rendered),
       published: p.publishedDate,

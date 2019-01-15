@@ -1,4 +1,5 @@
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
+import * as httpError from 'http-errors';
 
 import { db, tableName } from "./db";
 
@@ -36,10 +37,11 @@ export default class Page implements PageData {
     }
 
     const result = await db.query(query).promise();
+    const items = result.Items || [];
 
     console.log('all pages consumed capacity', result.ConsumedCapacity);
 
-    return result.Items.map((i: PageData) => Page.make(i));
+    return items.map((i: PageData) => Page.make(i));
   }
 
   static async get(blogId: string, path: string): Promise<Page> {
@@ -59,7 +61,7 @@ export default class Page implements PageData {
     if (result.Item) {
       return Page.make(result.Item as PageData);
     } else {
-      return null;
+      throw new httpError.NotFound(`Could not find a record at path '${path}'`);
     }
   }
 

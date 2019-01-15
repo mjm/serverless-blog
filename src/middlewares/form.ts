@@ -1,5 +1,12 @@
 import Busboy from "busboy";
 
+interface UploadedFile {
+  field: string;
+  filename: string;
+  mimetype: string;
+  body: Buffer;
+}
+
 const formDataParser = () => {
   return {
     async before(handler) {
@@ -9,7 +16,7 @@ const formDataParser = () => {
       }
 
       let body = {};
-      let files = [];
+      let files: UploadedFile[] = [];
 
       const addField = (field, value) => {
         if (field.endsWith('[]')) {

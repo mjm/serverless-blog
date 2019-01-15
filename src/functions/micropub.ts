@@ -87,7 +87,7 @@ post
   .use(formDataParser());
 
 export const verify: CustomAuthorizerHandler = async (event, context) => {
-  let token = event.authorizationToken;
+  let token = event.authorizationToken || '';
   const methodArn = event.methodArn;
 
   console.log('Got auth token', token);

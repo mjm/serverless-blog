@@ -4,7 +4,7 @@ import httpError from "http-errors";
 export default class ScopeBag {
   private scopes: string[];
 
-  constructor(scope: string) {
+  constructor(scope: string | null) {
     this.scopes = (scope || '').split(' ').filter(s => s != '');
   }
 

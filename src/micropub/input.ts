@@ -50,7 +50,7 @@ export async function fromEvent(event): Promise<MicropubInput> {
 async function handleFormRequest(event): Promise<MicropubInput> {
   let input: MicropubCreateInput = {
     action: "create",
-    type: null
+    type: "entry"
   };
 
   for (const prop of Object.keys(event.body)) {
