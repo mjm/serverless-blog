@@ -1,6 +1,6 @@
 import { URL } from "url";
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
-import * as slug from "slug";
+import slug from "slug";
 import { format, parse } from "date-fns";
 import * as rs from "randomstring";
 import * as httpError from "http-errors";
@@ -126,7 +126,7 @@ export default class Post implements PostData {
   }
 
   static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
-    let values = { ":b": blogId };
+    let values: DynamoDB.DocumentClient.ExpressionAttributeValueMap = { ":b": blogId };
     let query: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
       IndexName: 'published-posts',
@@ -150,7 +150,7 @@ export default class Post implements PostData {
 
     console.log(`listing ${items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
 
-    return items.map((i: PostData) => Post.make(i));
+    return items.map(i => Post.make(i as PostData));
   }
 
   static async create(data: PostData): Promise<Post> {

@@ -48,7 +48,7 @@ export default class Uploader {
   }
 
   async uploadedUrls(): Promise<{[key: string]: string[]}> {
-    let result = {};
+    let result: {[key: string]: string[]} = {};
 
     for (const [field, urlPromises] of this.uploads) {
       result[field] = await Promise.all(urlPromises);

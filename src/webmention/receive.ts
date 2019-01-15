@@ -9,7 +9,7 @@ import * as mf from "../util/microformats";
 
 const ses = new SES();
 
-export async function enqueue(source, target): Promise<void> {
+export async function enqueue(source: string | undefined, target: string | undefined): Promise<void> {
   if (!source) {
     throw new httpError.BadRequest("No 'source' parameter included in request body");
   }

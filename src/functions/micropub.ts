@@ -1,4 +1,4 @@
-import { CustomAuthorizerHandler } from "aws-lambda";
+import { CustomAuthorizerHandler, Context } from "aws-lambda";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -8,7 +8,7 @@ import * as mp from "../micropub";
 import Post from "../model/post";
 import { authorizer, errorHandler, formDataParser } from "../middlewares";
 
-export const get = middy(async (event, context) => {
+export const get = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const q = event.queryStringParameters.q;
@@ -41,7 +41,7 @@ get
   .use(mw.cors())
   .use(authorizer());
 
-export const post = middy(async (event, context) => {
+export const post = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const input = await mp.input.fromEvent(event);

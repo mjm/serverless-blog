@@ -50,12 +50,12 @@ export function toStorage(item: any): StorableItem {
 }
 
 function transformProps(item: {[key: string]: any}): {[key: string]: any} {
-  let obj = {};
+  let obj: {[key: string]: any} = {};
 
   for (let key of Object.keys(item)) {
     let val = item[key];
 
-    val = val.map(v => {
+    val = val.map((v: any) => {
       if (typeof v === 'object' && 'type' in v) {
         return toStorage(v);
       } else {

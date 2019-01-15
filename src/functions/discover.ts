@@ -1,3 +1,4 @@
+import { Context } from "aws-lambda";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -5,7 +6,7 @@ import * as mw from "middy/middlewares";
 import { errorHandler } from "../middlewares";
 import * as mf from "../util/microformats";
 
-export const handle = middy(async (event, context) => {
+export const handle = middy(async (event: any, context: Context) => {
   const { url } = event.body;
   const data = await mf.parse(url);
 

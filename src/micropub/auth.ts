@@ -25,7 +25,7 @@ export function createToken(me: string, scope: string): string {
 }
 
 export function verifyToken(token: string): TokenDetails {
-  const { sub, scope } = jwt.verify(token, tokenSecret);
+  const { sub, scope } = jwt.verify(token, tokenSecret) as {[key: string]: any};
   return { me: sub, scope };
 }
 

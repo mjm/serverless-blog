@@ -38,7 +38,7 @@ function handleAdd(post: Post, props: PropertyMap) {
 }
 
 function handleDelete(post: Post, props: string[] | PropertyMap) {
-  if (props.constructor === Array) {
+  if (Array.isArray(props)) {
     for (let key of props as string[]) {
       delete post[key];
     }
@@ -46,7 +46,7 @@ function handleDelete(post: Post, props: string[] | PropertyMap) {
     for (let key of Object.keys(props)) {
       let current = post[key];
       if (current.constructor === Array) {
-        post.set(key, current.filter(v => !props[key].includes(v)));
+        post.set(key, current.filter((v: any) => !props[key].includes(v)));
       }
     }
   }

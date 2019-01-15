@@ -1,4 +1,5 @@
 import Busboy from "busboy";
+import * as middy from "middy";
 
 interface UploadedFile {
   field: string;
@@ -9,16 +10,16 @@ interface UploadedFile {
 
 const formDataParser = () => {
   return {
-    async before(handler) {
+    async before(handler: middy.IHandlerLambda) {
       let event = handler.event;
       if (!isFormRequest(event)) {
         return;
       }
 
-      let body = {};
+      let body: {[key: string]: any} = {};
       let files: UploadedFile[] = [];
 
-      const addField = (field, value) => {
+      const addField = (field: string, value: string) => {
         if (field.endsWith('[]')) {
           const key = field.slice(0, -2);
           if (body[key]) {
@@ -82,7 +83,7 @@ const formDataParser = () => {
 
 export default formDataParser;
 
-function isFormRequest(event): boolean {
+function isFormRequest(event: any): boolean {
   const contentType = event.headers['Content-Type'];
   return contentType.startsWith('application/x-www-form-urlencoded')
       || contentType.startsWith('multipart/form-data');

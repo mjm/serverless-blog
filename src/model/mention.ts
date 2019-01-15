@@ -72,7 +72,7 @@ export default class Mention implements MentionData {
     const items = result.Items || [];
 
     console.log('mentions for post consumed capacity', result.ConsumedCapacity);
-    return items.map((i: MentionData) => Mention.make(i));
+    return items.map(i => Mention.make(i as MentionData));
   }
 
   static async countForPost(post: Post): Promise<number> {

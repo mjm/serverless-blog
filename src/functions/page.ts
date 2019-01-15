@@ -1,3 +1,4 @@
+import { Context } from "aws-lambda";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -5,7 +6,7 @@ import * as mw from "middy/middlewares";
 import Page from "../model/page";
 import { authorizer, errorHandler } from "../middlewares";
 
-export const all = middy(async (event, context) => {
+export const all = middy(async (event: any, context: Context) => {
   const pages = await Page.all(event.blogId);
 
   return {
@@ -19,7 +20,7 @@ all
   .use(mw.cors())
   .use(authorizer());
 
-export const get = middy(async (event, context) => {
+export const get = middy(async (event: any, context: Context) => {
   const path = decodeURIComponent(event.pathParameters.path);
   const page = await Page.get(event.blogId, path);
 
@@ -34,7 +35,7 @@ get
   .use(mw.cors())
   .use(authorizer());
 
-export const update = middy(async (event, context) => {
+export const update = middy(async (event: any, context: Context) => {
   let path = decodeURIComponent(event.pathParameters.path);
   let page = await Page.get(event.blogId, path);
 
@@ -68,7 +69,7 @@ update
   .use(authorizer())
   .use(mw.jsonBodyParser());
 
-export const remove = middy(async (event, context) => {
+export const remove = middy(async (event: any, context: Context) => {
   const path = decodeURIComponent(event.pathParameters.path);
   await Page.deleteByPath(event.blogId, path);
 

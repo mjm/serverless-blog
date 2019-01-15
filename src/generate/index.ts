@@ -38,7 +38,7 @@ export default async function generate(blogId: string, options?: GenerateSiteOpt
 async function planRequests(site: site.Config, options: GenerateSiteOptions): Promise<SQS.SendMessageBatchRequestEntryList> {
   let requests: SQS.SendMessageBatchRequestEntryList = [];
 
-  const addEvent = (type, id, body?) => {
+  const addEvent = (type: string, id: string, body?: any) => {
     requests.push({
       Id: id,
       MessageBody: JSON.stringify({ site, ...(body || {}) }),

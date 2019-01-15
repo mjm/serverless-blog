@@ -1,4 +1,6 @@
-const errorTable = {
+import * as middy from 'middy';
+
+const errorTable: {[key: string]: string} = {
   400: 'invalid_request',
   401: 'unauthorized',
   403: 'forbidden',
@@ -7,7 +9,7 @@ const errorTable = {
 
 const errorHandler = () => {
   return {
-    onError(handler, next) {
+    onError(handler: any, next: middy.IMiddyNextFunction) {
       console.error(handler.error);
 
       handler.response = handler.response || {};

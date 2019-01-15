@@ -17,7 +17,7 @@ export default async function sendPings(site: Config): Promise<void> {
   }
 }
 
-async function sendPing(client, site: Config): Promise<void> {
+async function sendPing(client: xmlrpc.Client, site: Config): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const title = site.title;
     const url = `https://${site.blogId}/`;

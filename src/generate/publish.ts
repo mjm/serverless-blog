@@ -12,7 +12,7 @@ export default async function publish(siteConfig: Config, filePath: string, body
     Bucket: siteConfig.blogId, // TODO use a key in the config for this
     Key: filePath,
     Body: body,
-    ContentType: mime.contentType(path.basename(filePath)),
+    ContentType: mime.contentType(path.basename(filePath)) || undefined,
     ACL: 'public-read'
   }).promise();
 }

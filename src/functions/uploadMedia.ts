@@ -1,3 +1,4 @@
+import { Context } from "aws-lambda";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -5,7 +6,7 @@ import * as mw from "middy/middlewares";
 import Uploader from "../micropub/upload";
 import { authorizer, errorHandler, formDataParser } from "../middlewares";
 
-export const handle = middy(async (event, context) => {
+export const handle = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
   event.scopes.require('create', 'media');
 
@@ -28,7 +29,7 @@ handle
   .use(authorizer())
   .use(formDataParser());
 
-async function upload(event): Promise<string[]> {
+async function upload(event: any): Promise<string[]> {
   if (event.uploadedFiles.length !== 1) {
     throw new httpError.BadRequest(`Unexpected number of files in request: expected 1, got ${event.uploadedFiles.length}`);
   }

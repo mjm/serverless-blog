@@ -1,4 +1,5 @@
 import { URL } from "url";
+import * as middy from "middy";
 
 import ScopeBag from "../util/scope";
 
@@ -12,7 +13,7 @@ import ScopeBag from "../util/scope";
  */
 const authorizer = () => {
   return {
-    async before(handler) {
+    async before(handler: middy.IHandlerLambda) {
       const authorizerData = handler.event.requestContext.authorizer;
       if (!authorizerData) {
         return;

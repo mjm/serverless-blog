@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { DynamoDBStreamHandler, DynamoDBStreamEvent } from 'aws-lambda';
+import { DynamoDBStreamHandler, DynamoDBStreamEvent, Context } from 'aws-lambda';
 import { Converter } from 'aws-sdk/clients/dynamodb';
 import * as SQS from 'aws-sdk/clients/sqs';
 
@@ -66,7 +66,7 @@ function planRequests(site: site.Config, records: any[]): SQS.SendMessageBatchRe
   let requests: SQS.SendMessageBatchRequestEntryList = [];
   let includeIndex = false;
 
-  const addEvent = (type, id, body?) => {
+  const addEvent = (type: string, id: string, body?: any) => {
     requests.push({
       Id: id,
       MessageBody: JSON.stringify({ site, ...(body || {}) }),
@@ -121,12 +121,12 @@ async function processMentions(records: any[]): Promise<void> {
   }
 }
 
-export async function queueTrigger(event, context): Promise<void> {
+export async function queueTrigger(event: any, context: Context): Promise<void> {
   renderer.invalidate();
   await Promise.all(event.Records.map(handleMessage));
 }
 
-async function handleMessage(message): Promise<void> {
+async function handleMessage(message: any): Promise<void> {
   const { body, messageAttributes } = message;
   const parsedBody = JSON.parse(body);
   const eventType = messageAttributes.eventType.stringValue;
@@ -154,7 +154,7 @@ interface GenerateArchiveEvent extends GenerateEvent {
   month: string;
 }
 
-const eventHandlers = {
+const eventHandlers: {[key: string]: (e: any) => Promise<void>} = {
   async generateIndex(e: GenerateIndexEvent): Promise<void> {
     console.log('generating index for site', e.site.blogId);
     await generate.index(e.site);

@@ -1,3 +1,4 @@
+import { Context } from "aws-lambda";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -7,7 +8,7 @@ import * as qs from "querystring";
 import { createToken } from "../micropub/auth";
 import { errorHandler, formDataParser } from "../middlewares";
 
-export const create = middy(async (event, context) => {
+export const create = middy(async (event: any, context: Context) => {
   const { code, me, client_id, redirect_uri } = event.body;
   // TODO this should be discovered from the `me` site
   const authUrl = 'https://indieauth.com/auth';

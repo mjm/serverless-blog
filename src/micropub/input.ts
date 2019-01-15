@@ -35,7 +35,7 @@ export interface MicropubDeleteInput {
   url: string;
 }
 
-export async function fromEvent(event): Promise<MicropubInput> {
+export async function fromEvent(event: any): Promise<MicropubInput> {
   if (typeof event.body === 'string') {
     throw new httpError.BadRequest(`Unexpected content type: ${event.headers['Content-Type']}`);
   }
@@ -47,7 +47,7 @@ export async function fromEvent(event): Promise<MicropubInput> {
   }
 }
 
-async function handleFormRequest(event): Promise<MicropubInput> {
+async function handleFormRequest(event: any): Promise<MicropubInput> {
   let input: MicropubCreateInput = {
     action: "create",
     type: "entry"

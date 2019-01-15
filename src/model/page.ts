@@ -41,7 +41,7 @@ export default class Page implements PageData {
 
     console.log('all pages consumed capacity', result.ConsumedCapacity);
 
-    return items.map((i: PageData) => Page.make(i));
+    return items.map(i => Page.make(i as PageData));
   }
 
   static async get(blogId: string, path: string): Promise<Page> {
