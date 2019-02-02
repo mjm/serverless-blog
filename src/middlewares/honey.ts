@@ -12,6 +12,8 @@ const honeycomb = () => {
       let event = honey.newEvent();
       handler.event.honey = event;
 
+      handler.event.startTime = Date.now();
+
       let context: any = handler.event.requestContext || {};
 
       if (context.resourcePath) {
@@ -44,14 +46,7 @@ const honeycomb = () => {
     },
 
     async after(handler: middy.IHandlerLambda) {
-      let event = handler.event.honey;
-
-      let response: any = handler.response;
-      if (response && response.statusCode) {
-        event.addField("response.status_code", response.statusCode);
-      }
-
-      event.send();
+      finalizeEvent(handler);
     },
 
     async onError(handler: middy.IHandlerLambda) {
@@ -60,14 +55,24 @@ const honeycomb = () => {
       if (handler.error && handler.error.message) {
         event.addField("error", handler.error.message);
       }
-      let response: any = handler.response;
-      if (response && response.statusCode) {
-        event.addField("response.status_code", response.statusCode);
-      }
 
-      event.send();
-    }
+      finalizeEvent(handler);
+    },
+
   };
 };
+
+function finalizeEvent(handler: middy.IHandlerLambda) {
+  let event = handler.event.honey;
+
+  let response: any = handler.response;
+  if (response && response.statusCode) {
+    event.addField("response.status_code", response.statusCode);
+  }
+
+  event.addField("duration_ms", Date.now() - handler.event.startTime);
+  event.addField("remaining_ms", handler.context.getRemainingTimeInMillis());
+  event.send();
+}
 
 export default honeycomb;
