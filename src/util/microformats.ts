@@ -1,15 +1,33 @@
 import fetch from "node-fetch";
 import Microformats from "microformat-node";
 
-export async function parse(url: string): Promise<any> {
+export async function parse(url: string, event?: any): Promise<any> {
+  if (event) {
+    event.addField("mf.url", url);
+  }
+
+  let start = Date.now();
+
   const resp = await fetch(url);
   const html = await resp.text();
 
-  return await Microformats.getAsync({
+  if (event) {
+    event.addField("mf.fetch_ms", Date.now() - start);
+  }
+
+  start = Date.now();
+
+  const result = await Microformats.getAsync({
     html,
     baseUrl: url,
     textFormat: 'normalised'
   });
+
+  if (event) {
+    event.addField("mf.parse_ms", Date.now() - start);
+  }
+
+  return result;
 }
 
 export function getEntry(data: any): any {
