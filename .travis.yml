@@ -4,6 +4,19 @@ node_js:
 
 cache: npm
 
+before_install:
+  # Install honeymarker
+  - wget -q https://honeycomb.io/download/honeymarker/linux/honeymarker_1.9_amd64.deb
+  - echo '5aa10dd42f4f369c9463a8c8a361e46058339e6273055600ddad50e1bcdf2149  honeymarker_1.9_amd64.deb' | sha256sum -c && sudo dpkg -i honeymarker_1.9_amd64.deb
+
 script: 
   - npm test
   - npm run deploy
+
+after_script:
+  - |
+    honeymarker -k $HONEYCOMB_WRITE_KEY -d serverless-blog \
+      -t deploy \
+      -m "Build #$TRAVIS_BUILD_NUMBER" \
+      -u $TRAVIS_BUILD_WEB_URL \
+      add
