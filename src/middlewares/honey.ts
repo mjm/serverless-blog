@@ -12,7 +12,7 @@ const honeycomb = () => {
       let event = honey.newEvent();
       handler.event.honey = event;
 
-      let context: any = handler.context;
+      let context: any = handler.event.requestContext || {};
 
       if (context.resourcePath) {
         event.addField("request.resource_path", context.resourcePath);
@@ -35,11 +35,11 @@ const honeycomb = () => {
         }
       }
 
-      if (context.functionName) {
-        event.addField("function.name", context.functionName);
+      if (handler.context.functionName) {
+        event.addField("function.name", handler.context.functionName);
       }
-      if (context.functionVersion) {
-        event.addField("function.version", context.functionVersion);
+      if (handler.context.functionVersion) {
+        event.addField("function.version", handler.context.functionVersion);
       }
     },
 
