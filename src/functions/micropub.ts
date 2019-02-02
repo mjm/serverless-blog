@@ -12,6 +12,7 @@ export const get = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const q = event.queryStringParameters.q;
+  event.honey.addField("micropub.q", q);
 
   if (q === "config") {
     return {
@@ -25,6 +26,8 @@ export const get = middy(async (event: any, context: Context) => {
     };
   } else if (q === "source") {
     const url = event.queryStringParameters.url;
+    event.honey.addField("micropub.url", url);
+
     const result = await mp.source(url);
     return {
       statusCode: 200,
@@ -46,12 +49,19 @@ export const post = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const input = await mp.input.fromEvent(event);
+  event.honey.addField("micropub.action", input.action);
+
   event.scopes.require(input.action);
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
+    event.honey.addField("micropub.type", input.type);
+
     const p = await mp.create(event.blogId, input);
+
     const loc = `https://${event.blogId}${p.permalink}`;
+    event.honey.addField("micropub.url", loc);
+
     return {
       statusCode: 201,
       headers: {
@@ -62,14 +72,20 @@ export const post = middy(async (event: any, context: Context) => {
     };
   } else if (input.action === 'update') {
     console.log('updating post from micropub input:', input);
+    event.honey.addField("micropub.url", input.url);
+
     await mp.update(event.blogId, input);
+
     return {
       statusCode: 204,
       body: ""
     };
   } else if (input.action === 'delete') {
     console.log('deleting post from micropub input:', input);
+    event.honey.addField("micropub.url", input.url);
+
     await mp.delete(event.blogId, input);
+
     return {
       statusCode: 204,
       body: ""
@@ -88,7 +104,7 @@ post
   .use(mw.jsonBodyParser())
   .use(formDataParser());
 
-export const verify: CustomAuthorizerHandler = async (event, context) => {
+export const verify = middy(async (event: any, context: any) => {
   let token = event.authorizationToken || '';
   const methodArn = event.methodArn;
 
@@ -103,6 +119,11 @@ export const verify: CustomAuthorizerHandler = async (event, context) => {
     token = token.substring(7);
 
     const { me, scope } = mp.auth.verifyToken(token);
+    event.honey.add({
+      "request.principal": me,
+      "request.scope": scope
+    });
+
     console.log('allowing access for', me, 'with scopes:', scope);
 
     return {
@@ -119,4 +140,7 @@ export const verify: CustomAuthorizerHandler = async (event, context) => {
       policyDocument: mp.auth.createPolicy(false, methodArn)
     };
   }
-};
+});
+
+verify
+  .use(honeycomb());
