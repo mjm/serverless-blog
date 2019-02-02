@@ -50,6 +50,7 @@ provider:
       - ses:SendTemplatedEmail
     Resource: "arn:aws:ses:us-east-1:*:*"
   environment:
+    HONEYCOMB_WRITE_KEY: ${env:HONEYCOMB_WRITE_KEY}
     JWT_SECRET: ${env:JWT_SECRET}
     DYNAMODB_TABLE: ${self:custom.tableName}
     QUEUE_URL:

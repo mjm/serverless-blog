@@ -2,7 +2,7 @@ import { Context } from 'aws-lambda';
 import middy from "middy";
 import * as mw from "middy/middlewares";
 
-import { errorHandler } from "../middlewares";
+import { errorHandler, honeycomb } from "../middlewares";
 import generateSite, { GenerateSiteOptions } from "../generate";
 
 interface GenerateInput extends GenerateSiteOptions {
@@ -23,6 +23,7 @@ export const handleHttp = middy(async (event: any, context: Context) => {
 });
 
 handleHttp
+  .use(honeycomb())
   .use(mw.httpHeaderNormalizer())
   .use(mw.jsonBodyParser())
   .use(errorHandler());

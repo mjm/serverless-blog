@@ -4,7 +4,7 @@ import middy from "middy";
 import * as mw from "middy/middlewares";
 
 import Uploader from "../micropub/upload";
-import { authorizer, errorHandler, formDataParser } from "../middlewares";
+import { authorizer, errorHandler, formDataParser, honeycomb } from "../middlewares";
 
 export const handle = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
@@ -23,6 +23,7 @@ export const handle = middy(async (event: any, context: Context) => {
 });
 
 handle
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())

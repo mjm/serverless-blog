@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 import * as qs from "querystring";
 
 import { createToken } from "../micropub/auth";
-import { errorHandler, formDataParser } from "../middlewares";
+import { errorHandler, formDataParser, honeycomb } from "../middlewares";
 
 export const create = middy(async (event: any, context: Context) => {
   const { code, me, client_id, redirect_uri } = event.body;
@@ -39,6 +39,7 @@ export const create = middy(async (event: any, context: Context) => {
 });
 
 create
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())

@@ -2,7 +2,7 @@ import { Context } from "aws-lambda";
 import middy from "middy";
 import * as mw from "middy/middlewares";
 
-import { errorHandler, formDataParser } from "../middlewares";
+import { errorHandler, formDataParser, honeycomb } from "../middlewares";
 import * as recv from "../webmention/receive";
 
 export const receive = middy(async (event: any, context: Context) => {
@@ -16,5 +16,6 @@ export const receive = middy(async (event: any, context: Context) => {
 });
 
 receive
+  .use(honeycomb())
   .use(errorHandler())
   .use(formDataParser());

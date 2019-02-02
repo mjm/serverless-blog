@@ -4,7 +4,7 @@ import middy from "middy";
 import * as mw from "middy/middlewares";
 
 import Page from "../model/page";
-import { authorizer, errorHandler } from "../middlewares";
+import { authorizer, errorHandler, honeycomb } from "../middlewares";
 
 export const all = middy(async (event: any, context: Context) => {
   const pages = await Page.all(event.blogId);
@@ -16,6 +16,7 @@ export const all = middy(async (event: any, context: Context) => {
 });
 
 all
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer());
@@ -31,6 +32,7 @@ export const get = middy(async (event: any, context: Context) => {
 });
 
 get
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer());
@@ -64,6 +66,7 @@ export const update = middy(async (event: any, context: Context) => {
 });
 
 update
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer())
@@ -80,6 +83,7 @@ export const remove = middy(async (event: any, context: Context) => {
 });
 
 remove
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.cors())
   .use(authorizer());

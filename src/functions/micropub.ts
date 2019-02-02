@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 
 import * as mp from "../micropub";
 import Post from "../model/post";
-import { authorizer, errorHandler, formDataParser } from "../middlewares";
+import { authorizer, errorHandler, formDataParser, honeycomb } from "../middlewares";
 
 export const get = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
@@ -36,6 +36,7 @@ export const get = middy(async (event: any, context: Context) => {
 });
 
 get
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())
@@ -79,6 +80,7 @@ export const post = middy(async (event: any, context: Context) => {
 });
 
 post
+  .use(honeycomb())
   .use(errorHandler())
   .use(mw.httpHeaderNormalizer())
   .use(mw.cors())

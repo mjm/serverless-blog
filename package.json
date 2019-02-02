@@ -13,6 +13,7 @@
     "feed": "^2.0.2",
     "http-errors": "^1.7.1",
     "jsonwebtoken": "^8.4.0",
+    "libhoney": "^1.2.1",
     "lodash": "^4.17.11",
     "marked": "^0.5.2",
     "microformat-node": "^2.0.1",
