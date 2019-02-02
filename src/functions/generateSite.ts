@@ -11,7 +11,7 @@ interface GenerateInput extends GenerateSiteOptions {
 
 export const handleHttp = middy(async (event: any, context: Context) => {
   const input = event.body as GenerateInput;
-  await generateSite(input.blogId, input);
+  await generateSite(input.blogId, input, event.honey);
 
   return {
     statusCode: 200,
