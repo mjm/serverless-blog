@@ -16,7 +16,7 @@ script:
 after_script:
   - |
     honeymarker -k $HONEYCOMB_WRITE_KEY -d serverless-blog \
+      add \
       -t deploy \
       -m "Build #$TRAVIS_BUILD_NUMBER" \
-      -u $TRAVIS_BUILD_WEB_URL \
-      add
+      -u $TRAVIS_BUILD_WEB_URL
