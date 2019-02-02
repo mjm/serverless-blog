@@ -11,6 +11,7 @@ export const handle = middy(async (event: any, context: Context) => {
   event.scopes.require('create', 'media');
 
   const urls = await upload(event);
+  event.honey.addField("upload.url", urls[0]);
 
   return {
     statusCode: 201,
@@ -37,6 +38,11 @@ async function upload(event: any): Promise<string[]> {
 
   const uploader = new Uploader(event.blogId);
   const { field, body, mimetype } = event.uploadedFiles[0]
+  event.honey.add({
+    "upload.content_type": mimetype,
+    "upload.byte_count": Buffer.byteLength(body)
+  });
+
   if (field !== 'file') {
     throw new httpError.BadRequest(`Unexpected field name '${field}'. Field name should be 'file'.`);
   }
