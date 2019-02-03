@@ -25,6 +25,7 @@ export const dbTrigger = middy(async (event: any, context: any) => {
     const span = beeline.startSpan({
       "site.blog_id": blogId,
       "record_count": records.length,
+      "name": "process site records",
     });
 
     // many requests will need this info, so we should preload it
@@ -133,18 +134,28 @@ async function processMentions(records: any[]): Promise<void> {
   }
 }
 
-export async function queueTrigger(event: any, context: Context): Promise<void> {
+export const queueTrigger = middy(async (event: any, context: Context) => {
   renderer.invalidate();
   await Promise.all(event.Records.map(handleMessage));
-}
+});
+
+queueTrigger.use(honeycomb());
 
 async function handleMessage(message: any): Promise<void> {
+  const span = beeline.startSpan({
+    name: "handle queue message"
+  });
+
   const { body, messageAttributes } = message;
   const parsedBody = JSON.parse(body);
   const eventType = messageAttributes.eventType.stringValue;
 
+  beeline.addContext({ "meta.type": eventType });
+
   const fn = eventHandlers[eventType];
   await fn(parsedBody);
+
+  beeline.finishSpan(span);
 }
 
 interface GenerateEvent {
