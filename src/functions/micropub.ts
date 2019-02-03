@@ -1,4 +1,5 @@
 import { CustomAuthorizerHandler, Context } from "aws-lambda";
+import beeline from "honeycomb-beeline";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -12,7 +13,7 @@ export const get = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const q = event.queryStringParameters.q;
-  event.honey.addField("micropub.q", q);
+  beeline.addContext({ "micropub.q": q });
 
   if (q === "config") {
     return {
@@ -26,7 +27,7 @@ export const get = middy(async (event: any, context: Context) => {
     };
   } else if (q === "source") {
     const url = event.queryStringParameters.url;
-    event.honey.addField("micropub.url", url);
+    beeline.addContext({ "micropub.url": url });
 
     const result = await mp.source(url);
     return {
@@ -49,18 +50,18 @@ export const post = middy(async (event: any, context: Context) => {
   console.log('got micropub request for', event.blogId);
 
   const input = await mp.input.fromEvent(event);
-  event.honey.addField("micropub.action", input.action);
+  beeline.addContext({ "micropub.action": input.action });
 
   event.scopes.require(input.action);
 
   if (input.action === 'create') {
     console.log('creating post from micropub input:', input);
-    event.honey.addField("micropub.type", input.type);
+    beeline.addContext({ "micropub.type": input.type });
 
     const p = await mp.create(event.blogId, input);
 
     const loc = `https://${event.blogId}${p.permalink}`;
-    event.honey.addField("micropub.url", loc);
+    beeline.addContext({ "micropub.url": loc });
 
     return {
       statusCode: 201,
@@ -72,7 +73,7 @@ export const post = middy(async (event: any, context: Context) => {
     };
   } else if (input.action === 'update') {
     console.log('updating post from micropub input:', input);
-    event.honey.addField("micropub.url", input.url);
+    beeline.addContext({ "micropub.url": input.url });
 
     await mp.update(event.blogId, input);
 
@@ -82,7 +83,7 @@ export const post = middy(async (event: any, context: Context) => {
     };
   } else if (input.action === 'delete') {
     console.log('deleting post from micropub input:', input);
-    event.honey.addField("micropub.url", input.url);
+    beeline.addContext({ "micropub.url": input.url });
 
     await mp.delete(event.blogId, input);
 
@@ -119,7 +120,7 @@ export const verify = middy(async (event: any, context: any) => {
     token = token.substring(7);
 
     const { me, scope } = mp.auth.verifyToken(token);
-    event.honey.add({
+    beeline.addContext({
       "request.principal": me,
       "request.scope": scope
     });

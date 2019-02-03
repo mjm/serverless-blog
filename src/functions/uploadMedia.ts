@@ -1,4 +1,5 @@
 import { Context } from "aws-lambda";
+import beeline from "honeycomb-beeline";
 import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
@@ -11,7 +12,7 @@ export const handle = middy(async (event: any, context: Context) => {
   event.scopes.require('create', 'media');
 
   const urls = await upload(event);
-  event.honey.addField("upload.url", urls[0]);
+  beeline.addContext({ "upload.url": urls[0] });
 
   return {
     statusCode: 201,
@@ -38,7 +39,7 @@ async function upload(event: any): Promise<string[]> {
 
   const uploader = new Uploader(event.blogId);
   const { field, body, mimetype } = event.uploadedFiles[0]
-  event.honey.add({
+  beeline.addContext({
     "upload.content_type": mimetype,
     "upload.byte_count": Buffer.byteLength(body)
   });

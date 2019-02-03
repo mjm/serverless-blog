@@ -8,7 +8,7 @@ import * as mf from "../util/microformats";
 
 export const handle = middy(async (event: any, context: Context) => {
   const { url } = event.body;
-  const data = await mf.parse(url, event.honey);
+  const data = await mf.parse(url);
 
   return {
     statusCode: 200,

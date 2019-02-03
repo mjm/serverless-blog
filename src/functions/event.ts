@@ -1,8 +1,11 @@
+import beeline from "honeycomb-beeline";
 import * as _ from 'lodash';
+import middy from "middy";
 import { DynamoDBStreamHandler, DynamoDBStreamEvent, Context } from 'aws-lambda';
 import { Converter } from 'aws-sdk/clients/dynamodb';
 import * as SQS from 'aws-sdk/clients/sqs';
 
+import { honeycomb } from "../middlewares";
 import * as site from "../model/site";
 import Post, { PostData } from "../model/post";
 import Page, { PageData } from "../model/page";
@@ -15,10 +18,15 @@ import * as renderer from "../generate/renderer";
 
 import * as receive from "../webmention/receive";
 
-export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
+export const dbTrigger = middy(async (event: any, context: any) => {
   const recordsByBlogId = collectRecords(event);
 
   for (const [blogId, records] of recordsByBlogId) {
+    const span = beeline.startSpan({
+      "site.blog_id": blogId,
+      "record_count": records.length,
+    });
+
     // many requests will need this info, so we should preload it
     const config = await site.getConfig(blogId);
     const requests = planRequests(config, records);
@@ -31,8 +39,12 @@ export const dbTrigger: DynamoDBStreamHandler = async (event, context) => {
     }
 
     await processMentions(records);
+
+    beeline.finishSpan(span);
   }
-};
+});
+
+dbTrigger.use(honeycomb());
 
 function collectRecords(event: DynamoDBStreamEvent): Map<string, any> {
   let records = new Map<string, any>();

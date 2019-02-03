@@ -1,31 +1,22 @@
+import beeline from "honeycomb-beeline";
 import fetch from "node-fetch";
 import Microformats from "microformat-node";
 
-export async function parse(url: string, event?: any): Promise<any> {
-  if (event) {
-    event.addField("mf.url", url);
-  }
+export async function parse(url: string): Promise<any> {
+  beeline.addContext({ "mf.url": url });
 
-  let start = Date.now();
-
+  const fetchTimer = beeline.startTimer("fetch");
   const resp = await fetch(url);
   const html = await resp.text();
+  beeline.finishTimer(fetchTimer);
 
-  if (event) {
-    event.addField("mf.fetch_ms", Date.now() - start);
-  }
-
-  start = Date.now();
-
+  const parseTimer = beeline.startTimer("parse");
   const result = await Microformats.getAsync({
     html,
     baseUrl: url,
     textFormat: 'normalised'
   });
-
-  if (event) {
-    event.addField("mf.parse_ms", Date.now() - start);
-  }
+  beeline.finishTimer("parse");
 
   return result;
 }

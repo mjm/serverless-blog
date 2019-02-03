@@ -1,48 +1,29 @@
 import Libhoney from "libhoney";
+import beeline from "honeycomb-beeline";
 import * as middy from "middy";
 
-let honey = new Libhoney({
+beeline({
   writeKey: process.env.HONEYCOMB_WRITE_KEY || "",
-  dataset: process.env.HONEYCOMB_DATASET || "serverless-blog"
+  dataset: process.env.HONEYCOMB_DATASET || "serverless-blog",
+  serviceName: "blog-api"
 });
 
 const honeycomb = () => {
   return {
     async before(handler: middy.IHandlerLambda) {
-      let event = honey.newEvent();
-      handler.event.honey = event;
+      const context: any = handler.event.requestContext || {};
 
-      handler.event.startTime = Date.now();
-
-      let context: any = handler.event.requestContext || {};
-
-      if (context.resourcePath) {
-        event.addField("request.resource_path", context.resourcePath);
-      }
-      if (context.requestId) {
-        event.addField("request.id", context.requestId);
-      }
-      if (context.protocol) {
-        event.addField("request.protocol", context.protocol);
-      }
-      if (context.httpMethod) {
-        event.addField("request.method", context.httpMethod);
-      }
-      if (context.authorizer) {
-        if (context.authorizer.principalId) {
-          event.addField("request.principal", context.authorizer.principalId);
-        }
-        if (context.authorizer.scope) {
-          event.addField("request.scope", context.authorizer.scope);
-        }
-      }
-
-      if (handler.context.functionName) {
-        event.addField("function.name", handler.context.functionName);
-      }
-      if (handler.context.functionVersion) {
-        event.addField("function.version", handler.context.functionVersion);
-      }
+      const trace = beeline.startTrace({
+        "request.resource_path": context.resourcePath,
+        "request.id": context.requestId,
+        "request.protocol": context.protocol,
+        "request.method": context.httpMethod,
+        "request.principal": context.authorizer ? context.authorizer.principalId : undefined,
+        "request.scope": context.authorizer ? context.authorizer.scope : undefined,
+        "name": handler.context.functionName,
+        "function.version": handler.context.functionVersion
+      });
+      handler.event.trace = trace;
     },
 
     async after(handler: middy.IHandlerLambda) {
@@ -50,29 +31,28 @@ const honeycomb = () => {
     },
 
     async onError(handler: middy.IHandlerLambda) {
-      let event = handler.event.honey;
-
       if (handler.error && handler.error.message) {
-        event.addField("error", handler.error.message);
+        beeline.addContext({ "error": handler.error.message });
       }
 
       finalizeEvent(handler);
     },
-
   };
 };
 
 function finalizeEvent(handler: middy.IHandlerLambda) {
-  let event = handler.event.honey;
+  let trace = handler.event.trace;
+  if (!trace) {
+    return;
+  }
 
   let response: any = handler.response;
   if (response && response.statusCode) {
-    event.addField("response.status_code", response.statusCode);
+    beeline.addContext({ "response.status_code": response.statusCode });
   }
 
-  event.addField("duration_ms", Date.now() - handler.event.startTime);
-  event.addField("remaining_ms", handler.context.getRemainingTimeInMillis());
-  event.send();
+  beeline.addContext({ "remaining_ms": handler.context.getRemainingTimeInMillis() });
+  beeline.finishTrace(trace);
 }
 
 export default honeycomb;

@@ -1,3 +1,4 @@
+import beeline from "honeycomb-beeline";
 import * as _ from 'lodash';
 import * as SQS from 'aws-sdk/clients/sqs';
 
@@ -22,25 +23,21 @@ export interface GenerateSiteOptions {
   archives?: "all" | string[];
 }
 
-export default async function generate(blogId: string, options?: GenerateSiteOptions, event?: any): Promise<void> {
+export default async function generate(blogId: string, options?: GenerateSiteOptions): Promise<void> {
   options = options || {};
 
-  if (event) {
-    event.add({
-      "generate.index": options.index,
-      "generate.error": options.error,
-      "generate.posts": JSON.stringify(options.posts),
-      "generate.pages": JSON.stringify(options.pages),
-      "generate.archives": JSON.stringify(options.archives)
-    });
-  }
+  beeline.addContext({
+    "generate.index": options.index,
+    "generate.error": options.error,
+    "generate.posts": JSON.stringify(options.posts),
+    "generate.pages": JSON.stringify(options.pages),
+    "generate.archives": JSON.stringify(options.archives)
+  });
 
   const config = await site.getConfig(blogId);
   const requests = await planRequests(config, options);
 
-  if (event) {
-    event.addField("generate.request_count", requests.length);
-  }
+  beeline.addContext({ "generate.request_count": requests.length });
 
   // only 10 messages allowed in a batch
   for (const rs of _.chunk(requests, 10)) {
