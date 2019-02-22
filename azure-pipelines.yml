@@ -23,3 +23,7 @@ steps:
 
 - script: npm run deploy
   displayName: Deploy to AWS
+  env:
+    AWS_DEFAULT_REGION: $(aws.region)
+    AWS_ACCESS_KEY_ID: $(aws.accessKeyId)
+    AWS_SECRET_ACCESS_KEY: $(aws.secretAccessKey)
