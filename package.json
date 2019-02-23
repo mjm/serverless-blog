@@ -5,8 +5,7 @@
   "main": "handler.js",
   "scripts": {
     "deploy": "serverless deploy --conceal",
-    "deploy-pkg": "serverless deploy --conceal --package deploy.zip",
-    "package": "serverless package -p deploy.zip",
+    "package": "serverless package",
     "test": "jest"
   },
   "dependencies": {

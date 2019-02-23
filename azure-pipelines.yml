@@ -18,9 +18,9 @@ steps:
 
 - script: npm run package
   displayName: Package for AWS
-  #  env:
-  #    JWT_SECRET: $(jwt.secret)
-  #    HONEYCOMB_WRITE_KEY: $(honeycomb.write_key)
+  env:
+    JWT_SECRET: $(jwt.secret)
+    HONEYCOMB_WRITE_KEY: $(honeycomb.write_key)
   #    AWS_DEFAULT_REGION: $(aws.region)
   #    AWS_ACCESS_KEY_ID: $(aws.accessKeyId)
   #    AWS_SECRET_ACCESS_KEY: $(aws.secretAccessKey)
@@ -28,4 +28,5 @@ steps:
 - task: PublishPipelineArtifact@0
   inputs:
     artifactName: deployPackage
-    targetPath: deploy.zip
+    targetPath: .serverless
+  displayName: Publish deploy package
