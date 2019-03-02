@@ -1,5 +1,5 @@
-import * as input from "./input";
 import * as auth from "./auth";
+import * as input from "./input";
 
 export { input, auth };
 export { default as config } from "./config";

@@ -14,12 +14,12 @@ interface Author {
 }
 
 export async function getConfig(blogId: string): Promise<Config> {
-  let config = await db.get({
+  const config = await db.get({
     TableName: tableName,
     Key: {
       blogId,
-      path: 'config'
-    }
+      path: "config",
+    },
   }).promise();
 
   return config.Item as Config;

@@ -1,14 +1,14 @@
-import { runtime } from "nunjucks";
 import marked from "marked";
+import { runtime } from "nunjucks";
 
-import { DecoratedPost } from "./types";
+import Mention from "../model/mention";
+import Post from "../model/post";
+import { Config } from "../model/site";
 import embedTweets from "./embedTweets";
 import { decorate as decorateMention } from "./mention";
 import publish from "./publish";
 import * as renderer from "./renderer";
-import { Config } from "../model/site";
-import Post from "../model/post";
-import Mention from "../model/mention";
+import { DecoratedPost } from "./types";
 
 export default async function generate(site: Config, post: Post, mentions: Mention[]): Promise<void> {
   const p = await decorate(post);
@@ -21,7 +21,7 @@ export default async function generate(site: Config, post: Post, mentions: Menti
   // transform /foo/bar/ to foo/bar/index.html
   const dest = `${p.permalink.substring(1)}index.html`;
 
-  console.log('publishing', p.path, 'to', dest);
+  console.log("publishing", p.path, "to", dest);
   await publish(site, dest, body);
 }
 
@@ -31,12 +31,12 @@ export async function decorate(posts: Post[]): Promise<DecoratedPost[]>;
 export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPost | DecoratedPost[]> {
   if (postOrArray.constructor === Array) {
     const posts = postOrArray as Post[];
-    return await Promise.all(posts.map(p => decorate(p)));
+    return await Promise.all(posts.map((p) => decorate(p)));
   } else {
     const p = postOrArray as Post;
-    let rendered = '';
+    let rendered = "";
     if (p.content) {
-      if (typeof p.content === 'string') {
+      if (typeof p.content === "string") {
         const embedded = await embedTweets(p.content);
         rendered = marked(embedded);
       } else {
@@ -44,16 +44,16 @@ export async function decorate(postOrArray: Post | Post[]): Promise<DecoratedPos
       }
     }
 
-    let decorated: DecoratedPost = {
+    const decorated: DecoratedPost = {
       type: p.type,
-      path: p.path || '',
+      path: p.path || "",
       name: p.name,
       content: new runtime.SafeString(rendered),
       published: p.publishedDate,
       photo: p.photo,
       syndication: p.syndication,
       permalink: p.permalink,
-      mentionCount: p.mentionCount
+      mentionCount: p.mentionCount,
     };
     return decorated;
   }

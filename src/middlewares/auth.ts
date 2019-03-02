@@ -1,5 +1,5 @@
-import { URL } from "url";
 import * as middy from "middy";
+import { URL } from "url";
 
 import ScopeBag from "../util/scope";
 
@@ -21,12 +21,12 @@ const authorizer = () => {
 
       const principalId = authorizerData.principalId;
       const hostname = new URL(principalId).hostname;
-      const blogId = hostname.replace(/\.s3-website-.*/, '');
+      const blogId = hostname.replace(/\.s3-website-.*/, "");
       const scopes = new ScopeBag(authorizerData.scope);
 
       handler.event.blogId = blogId;
       handler.event.scopes = scopes;
-    }
+    },
   };
 };
 

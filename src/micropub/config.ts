@@ -11,23 +11,23 @@ interface PostType {
 }
 
 export default function config(event: APIGatewayProxyEvent): MicropubConfig {
-  const url = 'https://blog-api.mattmoriarity.com/micropub/media';
+  const url = "https://blog-api.mattmoriarity.com/micropub/media";
 
   return {
     "media-endpoint": url,
     "post-types": [
       {
-        type: 'note',
-        name: 'Status Update'
+        type: "note",
+        name: "Status Update",
       },
       {
-        type: 'article',
-        name: 'Blog Post'
+        type: "article",
+        name: "Blog Post",
       },
       {
-        type: 'photo',
-        name: 'Photo'
-      }
-    ]
+        type: "photo",
+        name: "Photo",
+      },
+    ],
   };
 }

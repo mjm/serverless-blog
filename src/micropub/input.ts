@@ -1,7 +1,7 @@
 import * as httpError from "http-errors";
 
-import Post from "../model/post";
 import Uploader from "../micropub/upload";
+import Post from "../model/post";
 import * as mf from "../util/microformats";
 
 export type MicropubInput = MicropubCreateInput | MicropubUpdateInput | MicropubDeleteInput;
@@ -18,7 +18,9 @@ export interface MicropubCreateInput {
   [propName: string]: any;
 }
 
-export type PropertyMap = {[key: string]: any[]};
+export interface PropertyMap {
+  [key: string]: any[];
+}
 
 export interface MicropubUpdateInput {
   action: "update";
@@ -36,11 +38,11 @@ export interface MicropubDeleteInput {
 }
 
 export async function fromEvent(event: any): Promise<MicropubInput> {
-  if (typeof event.body === 'string') {
-    throw new httpError.BadRequest(`Unexpected content type: ${event.headers['Content-Type']}`);
+  if (typeof event.body === "string") {
+    throw new httpError.BadRequest(`Unexpected content type: ${event.headers["Content-Type"]}`);
   }
 
-  if ('h' in event.body) {
+  if ("h" in event.body) {
     return await handleFormRequest(event);
   } else {
     return handleJsonRequest(event.body);
@@ -50,12 +52,12 @@ export async function fromEvent(event: any): Promise<MicropubInput> {
 async function handleFormRequest(event: any): Promise<MicropubInput> {
   let input: MicropubCreateInput = {
     action: "create",
-    type: "entry"
+    type: "entry",
   };
 
   for (const prop of Object.keys(event.body)) {
     const val = event.body[prop];
-    if (prop === 'h') {
+    if (prop === "h") {
       input.type = val;
     } else {
       input[prop] = val;
@@ -71,21 +73,21 @@ async function handleFormRequest(event: any): Promise<MicropubInput> {
   const urls = await uploader.uploadedUrls();
   input = {...input, ...urls};
 
-  console.log('Got input from multipart request', input);
+  console.log("Got input from multipart request", input);
   return input;
 }
 
 function handleJsonRequest(body: any): MicropubInput {
-  console.log('Got JSON for Micropub:', body);
-  if ('type' in body) {
-    console.log('Found type key in JSON, treating as a create');
+  console.log("Got JSON for Micropub:", body);
+  if ("type" in body) {
+    console.log("Found type key in JSON, treating as a create");
     const item = mf.toStorage(body);
     return { action: "create", ...item };
-  } else if (body.action === 'update') {
+  } else if (body.action === "update") {
     return body as MicropubUpdateInput;
-  } else if (body.action === 'delete') {
+  } else if (body.action === "delete") {
     return body as MicropubDeleteInput;
   }
 
-  throw new httpError.BadRequest('Could not understand Micropub JSON request');
+  throw new httpError.BadRequest("Could not understand Micropub JSON request");
 }

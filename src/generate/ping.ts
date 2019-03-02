@@ -9,7 +9,7 @@ export default async function sendPings(site: Config): Promise<void> {
   }
 
   for (const pingUrl of site.pings) {
-    const isSecure = pingUrl.startsWith('https'); // hacky but fine
+    const isSecure = pingUrl.startsWith("https"); // hacky but fine
     // I wish it figured this out from the URL for us.
     const client = isSecure ? xmlrpc.createSecureClient(pingUrl) : xmlrpc.createClient(pingUrl);
 
@@ -22,9 +22,9 @@ async function sendPing(client: xmlrpc.Client, site: Config): Promise<void> {
     const title = site.title;
     const url = `https://${site.blogId}/`;
 
-    client.methodCall('weblogUpdates.ping', [title, url], err => {
+    client.methodCall("weblogUpdates.ping", [title, url], (err) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
         resolve();
       }

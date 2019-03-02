@@ -4,8 +4,8 @@ import * as httpError from "http-errors";
 import middy from "middy";
 import * as mw from "middy/middlewares";
 
-import Page from "../model/page";
 import { authorizer, errorHandler, honeycomb } from "../middlewares";
+import Page from "../model/page";
 
 export const all = middy(async (event: any, context: Context) => {
   const pages = await Page.all(event.blogId);
@@ -13,7 +13,7 @@ export const all = middy(async (event: any, context: Context) => {
 
   return {
     statusCode: 200,
-    body: JSON.stringify(pages)
+    body: JSON.stringify(pages),
   };
 });
 
@@ -32,8 +32,8 @@ export const get = middy(async (event: any, context: Context) => {
 
   return {
     statusCode: 200,
-    body: JSON.stringify(page)
-  }
+    body: JSON.stringify(page),
+  };
 });
 
 get
@@ -56,26 +56,26 @@ export const update = middy(async (event: any, context: Context) => {
   if (page) {
     beeline.addContext({
       "page.path": page.path,
-      "page.action": "update"
+      "page.action": "update",
     });
 
     page.name = event.body.name;
     page.content = event.body.content;
   } else {
-    if (!path.startsWith('pages/')) {
+    if (!path.startsWith("pages/")) {
       path = `pages/${path}`;
     }
 
     beeline.addContext({
       "page.path": path,
-      "page.action": "create"
+      "page.action": "create",
     });
 
     page = Page.make({
       blogId: event.blogId,
       path,
       name: event.body.name,
-      content: event.body.content
+      content: event.body.content,
     });
   }
 
@@ -83,7 +83,7 @@ export const update = middy(async (event: any, context: Context) => {
 
   return {
     statusCode: 204,
-    body: ""
+    body: "",
   };
 });
 
@@ -102,7 +102,7 @@ export const remove = middy(async (event: any, context: Context) => {
 
   return {
     statusCode: 204,
-    body: ""
+    body: "",
   };
 });
 

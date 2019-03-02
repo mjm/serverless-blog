@@ -1,6 +1,6 @@
 import beeline from "honeycomb-beeline";
-import fetch from "node-fetch";
 import Microformats from "microformat-node";
+import fetch from "node-fetch";
 
 export async function parse(url: string): Promise<any> {
   beeline.addContext({ "mf.url": url });
@@ -14,7 +14,7 @@ export async function parse(url: string): Promise<any> {
   const result = await Microformats.getAsync({
     html,
     baseUrl: url,
-    textFormat: 'normalised'
+    textFormat: "normalised",
   });
   beeline.finishTimer("parse");
 
@@ -24,9 +24,9 @@ export async function parse(url: string): Promise<any> {
 export function getEntry(data: any): any {
   const { items } = data;
 
-  for (let item of items) {
+  for (const item of items) {
     const type = item.type[0];
-    if (type === 'h-entry') {
+    if (type === "h-entry") {
       return item;
     }
   }
@@ -35,15 +35,15 @@ export function getEntry(data: any): any {
 }
 
 export const singularKeys: string[] = [
-  'url',
-  'name',
-  'content',
-  'published',
-  'updated',
-  'post-status',
-  'mp-slug',
-  'in-reply-to',
-  'repost-of'
+  "url",
+  "name",
+  "content",
+  "published",
+  "updated",
+  "post-status",
+  "mp-slug",
+  "in-reply-to",
+  "repost-of",
 ];
 
 interface StorableItem {
@@ -52,20 +52,20 @@ interface StorableItem {
 }
 
 export function toStorage(item: any): StorableItem {
-  const type = item.type[0].replace(/^h-/, '');
+  const type = item.type[0].replace(/^h-/, "");
   const props = transformProps(item.properties);
 
   return { type, ...props };
 }
 
 function transformProps(item: {[key: string]: any}): {[key: string]: any} {
-  let obj: {[key: string]: any} = {};
+  const obj: {[key: string]: any} = {};
 
-  for (let key of Object.keys(item)) {
+  for (const key of Object.keys(item)) {
     let val = item[key];
 
     val = val.map((v: any) => {
-      if (typeof v === 'object' && 'type' in v) {
+      if (typeof v === "object" && "type" in v) {
         return toStorage(v);
       } else {
         return v;

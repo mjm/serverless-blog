@@ -19,22 +19,22 @@ export default async function generate(site: Config): Promise<void> {
 async function generateIndex(site: Config, posts: DecoratedPost[]): Promise<void> {
   const r = renderer.get(site);
 
-  console.log('rendering index.html');
-  const body = await r('index.html', { site, posts });
+  console.log("rendering index.html");
+  const body = await r("index.html", { site, posts });
 
-  console.log('publishing index.html');
-  await publish(site, 'index.html', body);
+  console.log("publishing index.html");
+  await publish(site, "index.html", body);
 }
 
 async function generateFeeds(site: Config, posts: DecoratedPost[]): Promise<void> {
   const r = renderer.get(site);
 
-  console.log('generating site feed');
+  console.log("generating site feed");
   const feed = await generateFeed(site, posts);
 
-  const json = publish(site, 'feed.json', feed.json1());
-  const atom = publish(site, 'feed.atom', feed.atom1());
-  const rss  = publish(site, 'feed.rss',  feed.rss2());
+  const json = publish(site, "feed.json", feed.json1());
+  const atom = publish(site, "feed.atom", feed.atom1());
+  const rss  = publish(site, "feed.rss",  feed.rss2());
 
   await Promise.all([json, atom, rss]);
 }

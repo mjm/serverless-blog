@@ -5,13 +5,15 @@ export default async function embedTweets(str: string): Promise<string> {
   const tweetRegex = /https:\/\/twitter.com\/[A-Za-z0-9_]+\/status\/\d+(?:\?s=\d+)?/g;
 
   let embedded = str;
-  let result;
-  while ((result = tweetRegex.exec(embedded)) !== null) {
+  let result = tweetRegex.exec(embedded);
+  while (result !== null) {
     const url = result[0];
     const tweetHtml = await getTweetHtml(url);
 
-    embedded = embedded.substring(0, result.index) + tweetHtml + embedded.substring(result.index + url.length)
+    embedded = embedded.substring(0, result.index) + tweetHtml + embedded.substring(result.index + url.length);
     tweetRegex.lastIndex = result.index + tweetHtml.length;
+
+    result = tweetRegex.exec(embedded);
   }
 
   return embedded;
@@ -25,6 +27,6 @@ async function getTweetHtml(url: string): Promise<string> {
     const json = await response.json();
     return json.html;
   } else {
-    return `<a href="${url}">${url}</a>`
+    return `<a href="${url}">${url}</a>`;
   }
 }

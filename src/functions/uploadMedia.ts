@@ -8,8 +8,8 @@ import Uploader from "../micropub/upload";
 import { authorizer, errorHandler, formDataParser, honeycomb } from "../middlewares";
 
 export const handle = middy(async (event: any, context: Context) => {
-  console.log('got micropub request for', event.blogId);
-  event.scopes.require('create', 'media');
+  console.log("got micropub request for", event.blogId);
+  event.scopes.require("create", "media");
 
   const urls = await upload(event);
   beeline.addContext({ "upload.url": urls[0] });
@@ -17,11 +17,11 @@ export const handle = middy(async (event: any, context: Context) => {
   return {
     statusCode: 201,
     headers: {
-      Location: urls[0],
-      'Access-Control-Expose-Headers': 'Location'
+      "Location": urls[0],
+      "Access-Control-Expose-Headers": "Location",
     },
-    body: ""
-  }
+    body: "",
+  };
 });
 
 handle
@@ -34,17 +34,18 @@ handle
 
 async function upload(event: any): Promise<string[]> {
   if (event.uploadedFiles.length !== 1) {
-    throw new httpError.BadRequest(`Unexpected number of files in request: expected 1, got ${event.uploadedFiles.length}`);
+    throw new httpError.BadRequest(
+      `Unexpected number of files in request: expected 1, got ${event.uploadedFiles.length}`);
   }
 
   const uploader = new Uploader(event.blogId);
-  const { field, body, mimetype } = event.uploadedFiles[0]
+  const { field, body, mimetype } = event.uploadedFiles[0];
   beeline.addContext({
     "upload.content_type": mimetype,
-    "upload.byte_count": Buffer.byteLength(body)
+    "upload.byte_count": Buffer.byteLength(body),
   });
 
-  if (field !== 'file') {
+  if (field !== "file") {
     throw new httpError.BadRequest(`Unexpected field name '${field}'. Field name should be 'file'.`);
   }
 

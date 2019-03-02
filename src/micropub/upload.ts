@@ -4,35 +4,45 @@ import * as mime from "mime-types";
 import uuid from "uuid/v4";
 
 export default class Uploader {
-  readonly bucket: string;
-  client: S3;
+  public readonly bucket: string;
+  public client: S3;
   private readonly prefix: string;
-  private uploads: Map<string, Promise<string>[]>;
+  private uploads: Map<string, Array<Promise<string>>>;
 
   constructor(bucket: string) {
     this.bucket = bucket;
     this.client = new S3();
-    this.prefix = `media/${format(new Date(), 'YYYY/MM')}`;
+    this.prefix = `media/${format(new Date(), "YYYY/MM")}`;
     this.uploads = new Map();
   }
 
-  upload(field: string, body: Buffer, mimetype: string) {
-    const ext = mimetype ? '.' + mime.extension(mimetype) : '';
+  public upload(field: string, body: Buffer, mimetype: string) {
+    const ext = mimetype ? "." + mime.extension(mimetype) : "";
     const key = `${this.prefix}/${uuid()}${ext}`;
 
-    console.log('Uploading file to', key);
+    console.log("Uploading file to", key);
 
     const url = this.doUpload(body, key, mimetype);
     this.saveUrl(field, url);
   }
 
+  public async uploadedUrls(): Promise<{[key: string]: string[]}> {
+    const result: {[key: string]: string[]} = {};
+
+    for (const [field, urlPromises] of this.uploads) {
+      result[field] = await Promise.all(urlPromises);
+    }
+
+    return result;
+  }
+
   private async doUpload(body: Buffer, key: string, mimetype: string): Promise<string> {
     await this.client.putObject({
-      Bucket: this.bucket,
-      Key: key,
+      ACL: "public-read",
       Body: body,
+      Bucket: this.bucket,
       ContentType: mimetype,
-      ACL: 'public-read'
+      Key: key,
     }).promise();
 
     return `https://${this.bucket}/${key}`;
@@ -45,15 +55,5 @@ export default class Uploader {
       this.uploads.set(field, urls);
     }
     urls.push(url);
-  }
-
-  async uploadedUrls(): Promise<{[key: string]: string[]}> {
-    let result: {[key: string]: string[]} = {};
-
-    for (const [field, urlPromises] of this.uploads) {
-      result[field] = await Promise.all(urlPromises);
-    }
-
-    return result;
   }
 }

@@ -1,1 +1,1 @@
-declare module 'libhoney';
+declare module "libhoney";

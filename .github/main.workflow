@@ -17,9 +17,15 @@ action "Run tests" {
   args = "test"
 }
 
+action "Lint" {
+  needs = "Install dependencies"
+  uses = "actions/npm@master"
+  args = "run lint"
+}
+
 action "Deploy to production" {
   uses = "actions/npm@master"
-  needs = ["Run tests"]
+  needs = ["Lint", "Run tests"]
   args = "run deploy"
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "HONEYCOMB_WRITE_KEY", "JWT_SECRET"]
   env = {

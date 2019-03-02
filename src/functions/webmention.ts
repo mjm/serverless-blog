@@ -11,7 +11,7 @@ export const receive = middy(async (event: any, context: Context) => {
 
   return {
     statusCode: 202,
-    body: ""
+    body: "",
   };
 });
 

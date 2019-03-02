@@ -1,11 +1,11 @@
-import Libhoney from "libhoney";
 import beeline from "honeycomb-beeline";
+import Libhoney from "libhoney";
 import * as middy from "middy";
 
 beeline({
   writeKey: process.env.HONEYCOMB_WRITE_KEY || "",
   dataset: process.env.HONEYCOMB_DATASET || "serverless-blog",
-  serviceName: "blog-api"
+  serviceName: "blog-api",
 });
 
 const honeycomb = () => {
@@ -21,7 +21,7 @@ const honeycomb = () => {
         "request.principal": context.authorizer ? context.authorizer.principalId : undefined,
         "request.scope": context.authorizer ? context.authorizer.scope : undefined,
         "name": handler.context.functionName,
-        "function.version": handler.context.functionVersion
+        "function.version": handler.context.functionVersion,
       });
       handler.event.trace = trace;
     },
@@ -32,7 +32,7 @@ const honeycomb = () => {
 
     async onError(handler: middy.IHandlerLambda) {
       if (handler.error && handler.error.message) {
-        beeline.addContext({ "error": handler.error.message });
+        beeline.addContext({ error: handler.error.message });
       }
 
       finalizeEvent(handler);
@@ -41,17 +41,17 @@ const honeycomb = () => {
 };
 
 function finalizeEvent(handler: middy.IHandlerLambda) {
-  let trace = handler.event.trace;
+  const trace = handler.event.trace;
   if (!trace) {
     return;
   }
 
-  let response: any = handler.response;
+  const response: any = handler.response;
   if (response && response.statusCode) {
     beeline.addContext({ "response.status_code": response.statusCode });
   }
 
-  beeline.addContext({ "remaining_ms": handler.context.getRemainingTimeInMillis() });
+  beeline.addContext({ remaining_ms: handler.context.getRemainingTimeInMillis() });
   beeline.finishTrace(trace);
 }
 

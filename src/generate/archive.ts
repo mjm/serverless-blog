@@ -1,12 +1,12 @@
 import { format, parse } from "date-fns";
 
-import { Config } from "../model/site";
-import Post from "../model/post";
 import { archive } from "../model/cache";
+import Post from "../model/post";
+import { Config } from "../model/site";
 
-import * as renderer from "./renderer";
 import { decorate } from "./post";
 import publish from "./publish";
+import * as renderer from "./renderer";
 
 export async function generateIndex(site: Config): Promise<void> {
   const monthStrings = await archive.getMonths(site.blogId);
@@ -14,11 +14,11 @@ export async function generateIndex(site: Config): Promise<void> {
 
   const r = renderer.get(site);
 
-  console.log('rendering archive index');
-  const body = await r('archive.html', { site, months });
+  console.log("rendering archive index");
+  const body = await r("archive.html", { site, months });
 
-  console.log('publishing archive/index.html');
-  await publish(site, 'archive/index.html', body);
+  console.log("publishing archive/index.html");
+  await publish(site, "archive/index.html", body);
 }
 
 export async function generateMonth(site: Config, m: string): Promise<void> {
@@ -29,11 +29,11 @@ export async function generateMonth(site: Config, m: string): Promise<void> {
   const r = renderer.get(site);
 
   console.log(`rendering archive month ${m}`);
-  const body = await r('archiveMonth.html', { site, month, posts });
+  const body = await r("archiveMonth.html", { site, month, posts });
 
   const dest = `${month.permalink.substring(1)}index.html`;
 
-  console.log('publishing archive', m, 'to', dest);
+  console.log("publishing archive", m, "to", dest);
   await publish(site, dest, body);
 }
 
@@ -46,6 +46,6 @@ function makeMonth(m: string): Month {
   const date = parse(m);
   return {
     date,
-    permalink: `/${format(date, 'YYYY/MM')}/`
-  }
+    permalink: `/${format(date, "YYYY/MM")}/`,
+  };
 }

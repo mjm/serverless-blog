@@ -1,1 +1,1 @@
-declare module 'microformat-node';
+declare module "microformat-node";

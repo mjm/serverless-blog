@@ -1,14 +1,14 @@
-import { URL } from "url";
 import * as DynamoDB from "aws-sdk/clients/dynamodb";
-import slug from "slug";
 import { format, parse } from "date-fns";
-import * as rs from "randomstring";
 import * as httpError from "http-errors";
+import * as rs from "randomstring";
+import slug from "slug";
+import { URL } from "url";
 
-import { db, tableName } from "./db";
-import { archive } from "./cache";
-import Mention, { MentionItemData } from "./mention";
 import * as mf from "../util/microformats";
+import { archive } from "./cache";
+import { db, tableName } from "./db";
+import Mention, { MentionItemData } from "./mention";
 
 type PostStatus = "draft" | "published";
 
@@ -37,40 +37,18 @@ export interface PostData {
 }
 
 export default class Post implements PostData {
-  blogId: string;
-  path?: string;
-  type: string;
-  name?: string;
-  content: PostContent;
-  published?: string;
-  updated?: string;
-
-  mentionCount?: number;
-
-  status?: PostStatus;
-  slug?: string;
 
   [propName: string]: any;
 
-  get publishedDate(): Date | null { return this.getDate('published'); }
-  get updatedDate(): Date | null { return this.getDate('updated'); }
+  get publishedDate(): Date | null { return this.getDate("published"); }
+  get updatedDate(): Date | null { return this.getDate("updated"); }
 
   get properties(): string[] {
-    return Object.keys(this).filter(k => !Post.nonPropertyKeys.includes(k));
-  }
-
-  set(key: string, value: any) {
-    if (value === null || value === undefined) {
-      delete this[key];
-    } else if (Post.singularKeys.includes(key) && value.constructor === Array) {
-      this[key] = value[0];
-    } else {
-      this[key] = value;
-    }
+    return Object.keys(this).filter((k) => !Post.nonPropertyKeys.includes(k));
   }
 
   get permalink(): string {
-    return '/' + this.shortPath + '/';
+    return "/" + this.shortPath + "/";
   }
 
   get url(): string {
@@ -78,62 +56,54 @@ export default class Post implements PostData {
   }
 
   get shortPath(): string {
-    return (this.path || "").replace(/^posts\//, '');
-  }
-
-  getDate(prop: string): Date | null {
-    if (prop in this) {
-      return parse(this[prop]);
-    } else {
-      return null;
-    }
+    return (this.path || "").replace(/^posts\//, "");
   }
 
   static get singularKeys(): string[] {
     return mf.singularKeys;
   }
 
-  static readonly nonPropertyKeys: string[] = [
-    'blogId',
-    'path',
-    'type',
-    'mentionCount'
+  public static readonly nonPropertyKeys: string[] = [
+    "blogId",
+    "path",
+    "type",
+    "mentionCount",
   ];
 
-  static make(obj: PostData): Post {
+  public static make(obj: PostData): Post {
     return Object.create(Post.prototype, Object.getOwnPropertyDescriptors(obj));
   }
 
-  static async all(blogId: string): Promise<Post[]> {
+  public static async all(blogId: string): Promise<Post[]> {
     return await this.fetchList(blogId, {});
   }
 
-  static async recent(blogId: string): Promise<Post[]> {
+  public static async recent(blogId: string): Promise<Post[]> {
     return await this.fetchList(blogId, { limit: 20 });
   }
 
-  static async forMonth(blogId: string, month: string): Promise<Post[]> {
+  public static async forMonth(blogId: string, month: string): Promise<Post[]> {
     const start = `${month}-00`;
     const end = `${month}-99`;
 
     console.log(`getting posts between ${start} and ${end}`);
     return await this.fetchList(blogId, {
       between: {
-        start: start,
-        end: end
-      }
+        start,
+        end,
+      },
     });
   }
 
-  static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
-    let values: DynamoDB.DocumentClient.ExpressionAttributeValueMap = { ":b": blogId };
-    let query: DynamoDB.DocumentClient.QueryInput = {
+  public static async fetchList(blogId: string, options: {[key: string]: any}): Promise<Post[]> {
+    const values: DynamoDB.DocumentClient.ExpressionAttributeValueMap = { ":b": blogId };
+    const query: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
-      IndexName: 'published-posts',
+      IndexName: "published-posts",
+      ScanIndexForward: false,
+      ReturnConsumedCapacity: "TOTAL",
       KeyConditionExpression: "blogId = :b",
       ExpressionAttributeValues: values,
-      ScanIndexForward: false,
-      ReturnConsumedCapacity: "TOTAL"
     };
 
     if (options.limit) {
@@ -141,8 +111,8 @@ export default class Post implements PostData {
     }
     if (options.between) {
       query.KeyConditionExpression += " and (published between :start and :end)";
-      values[':start'] = options.between.start;
-      values[':end'] = options.between.end;
+      values[":start"] = options.between.start;
+      values[":end"] = options.between.end;
     }
 
     const result = await db.query(query).promise();
@@ -150,21 +120,21 @@ export default class Post implements PostData {
 
     console.log(`listing ${items.length} blog posts consumed capacity: ${JSON.stringify(result.ConsumedCapacity)}`);
 
-    return items.map(i => Post.make(i as PostData));
+    return items.map((i) => Post.make(i as PostData));
   }
 
-  static async create(data: PostData): Promise<Post> {
+  public static async create(data: PostData): Promise<Post> {
     if (data.status === "published" && !data.published) {
       data.published = new Date().toISOString();
     }
 
-    if (data.name == "") {
+    if (data.name === "") {
       delete data.name;
     }
 
     if (!data.path) {
       data.path = generatePath(data);
-    } else if (!data.path.startsWith('posts/')) {
+    } else if (!data.path.startsWith("posts/")) {
       data.path = `posts/${data.path}`;
     }
 
@@ -179,17 +149,17 @@ export default class Post implements PostData {
     return post;
   }
 
-  static async get(blogId: string, path: string): Promise<Post> {
-    if (!path.startsWith('posts/')) {
+  public static async get(blogId: string, path: string): Promise<Post> {
+    if (!path.startsWith("posts/")) {
       path = `posts/${path}`;
     }
 
     const query = {
       TableName: tableName,
       Key: {
-        blogId: blogId,
-        path: path
-      }
+        blogId,
+        path,
+      },
     };
 
     const result = await db.get(query).promise();
@@ -200,16 +170,56 @@ export default class Post implements PostData {
     }
   }
 
-  static async getByURL(url: string): Promise<Post> {
+  public static async getByURL(url: string): Promise<Post> {
     const { blogId, path } = keyFromURL(url);
     return await this.get(blogId, path);
   }
 
-  async save(): Promise<void> {
-    console.log('saving post:', this);
+  public static async deleteByURL(blogId: string, url: string): Promise<void> {
+    const key = keyFromURL(url);
+    if (blogId !== key.blogId) { return; }
+
+    await db.delete({
+      TableName: tableName,
+      Key: key,
+    }).promise();
+  }
+  public blogId: string;
+  public path?: string;
+  public type: string;
+  public name?: string;
+  public content: PostContent;
+  public published?: string;
+  public updated?: string;
+
+  public mentionCount?: number;
+
+  public status?: PostStatus;
+  public slug?: string;
+
+  public set(key: string, value: any) {
+    if (value === null || value === undefined) {
+      delete this[key];
+    } else if (Post.singularKeys.includes(key) && value.constructor === Array) {
+      this[key] = value[0];
+    } else {
+      this[key] = value;
+    }
+  }
+
+  public getDate(prop: string): Date | null {
+    if (prop in this) {
+      return parse(this[prop]);
+    } else {
+      return null;
+    }
+  }
+
+  public async save(): Promise<void> {
+    console.log("saving post:", this);
     await db.put({
       TableName: tableName,
-      Item: this
+      Item: this,
     }).promise();
 
     if (this.publishedDate) {
@@ -217,25 +227,15 @@ export default class Post implements PostData {
     }
   }
 
-  static async deleteByURL(blogId: string, url: string): Promise<void> {
-    const key = keyFromURL(url);
-    if (blogId !== key.blogId) { return; }
-
-    await db.delete({
-      TableName: tableName,
-      Key: key
-    }).promise();
-  }
-
-  async addMention(item: MentionItemData): Promise<Mention> {
+  public async addMention(item: MentionItemData): Promise<Mention> {
     return await Mention.create(this, { item });
   }
 
-  async getMentions(): Promise<Mention[]> {
+  public async getMentions(): Promise<Mention[]> {
     return await Mention.forPost(this);
   }
 
-  async getMentionCount(): Promise<number> {
+  public async getMentionCount(): Promise<number> {
     return await Mention.countForPost(this);
   }
 }
@@ -249,7 +249,7 @@ function generatePath(data: PostData): string {
   } else {
     let content: string;
     if (data.content) {
-      content = (typeof data.content === 'string') ? data.content : data.content.html;
+      content = (typeof data.content === "string") ? data.content : data.content.html;
     } else {
       content = rs.generate(10);
     }
@@ -258,20 +258,20 @@ function generatePath(data: PostData): string {
     if (s.length > 40) {
       s = s.substring(0, 40);
 
-      const i = s.lastIndexOf('-');
+      const i = s.lastIndexOf("-");
       s = s.substring(0, i);
     }
   }
 
   const published: Date = data.published ? parse(data.published) : new Date();
-  const dateStr = format(published, 'YYYY/MM');
+  const dateStr = format(published, "YYYY/MM");
 
   return `posts/${dateStr}/${s}`;
 }
 
 function makeSlug(str: string): string {
   return slug(str, {
-    lower: true
+    lower: true,
   });
 }
 
@@ -284,10 +284,10 @@ function keyFromURL(url: string): PostKey {
   const u = new URL(url);
   const blogId = u.hostname;
   let path = u.pathname;
-  if (path.endsWith('/')) {
+  if (path.endsWith("/")) {
     path = path.slice(0, -1);
   }
-  if (path.startsWith('/')) {
+  if (path.startsWith("/")) {
     path = path.substring(1);
   }
   path = `posts/${path}`;

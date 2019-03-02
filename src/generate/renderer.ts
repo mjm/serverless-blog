@@ -14,7 +14,7 @@ import * as helpers from "./helpers";
  */
 export type Renderer = (name: string, context: any) => Promise<string>;
 
-let cache = new Map<string, Renderer>();
+const cache = new Map<string, Renderer>();
 
 /**
  * Gets a cached renderer for the given site.
@@ -51,13 +51,13 @@ export function get(siteConfig: Config): Renderer {
 export function create(siteConfig: Config): Renderer {
   const loader = new S3Loader({
     bucket: siteConfig.blogId,
-    prefix: '_templates/'
+    prefix: "_templates/",
   });
   const env = new nunjucks.Environment(loader, { autoescape: true });
 
-  env.addFilter('dateformat', helpers.dateformat);
-  env.addFilter('feedlinks', helpers.feedLinks);
-  env.addFilter('micropublinks', helpers.micropubLinks);
+  env.addFilter("dateformat", helpers.dateformat);
+  env.addFilter("feedlinks", helpers.feedLinks);
+  env.addFilter("micropublinks", helpers.micropubLinks);
 
   return async function renderer(name: string, context: any): Promise<string> {
     return new Promise<string>((resolve, reject) => {

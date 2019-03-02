@@ -1,26 +1,26 @@
 import { Feed } from "feed";
 
 import { Config } from "../model/site";
-import { DecoratedPost } from "./types";
 import * as renderer from "./renderer";
+import { DecoratedPost } from "./types";
 
 export async function generateFeed(site: Config, posts: DecoratedPost[]): Promise<Feed> {
   const r = renderer.get(site);
-  const siteUrl = `https://${site.blogId}/`
-  let feed = new Feed({
+  const siteUrl = `https://${site.blogId}/`;
+  const feed = new Feed({
     id: siteUrl,
-    link: siteUrl,
     title: site.title,
-    copyright: `2018 ${site.author.name}`,
     feed: `${siteUrl}feed.atom`,
     feedLinks: {
-      json: `${siteUrl}feed.json`
+      json: `${siteUrl}feed.json`,
     },
     author: {
       name: site.author.name,
       email: site.author.email,
-      link: siteUrl
-    }
+      link: siteUrl,
+    },
+    link: siteUrl,
+    copyright: `2018 ${site.author.name}`,
   });
 
   for (const p of posts) {
@@ -31,11 +31,11 @@ export async function generateFeed(site: Config, posts: DecoratedPost[]): Promis
 
     feed.addItem({
       title: p.name as any, // title should be optional but isn't
-      link: url,
       id: url,
+      link: url,
       date: p.published,
+      content,
       published: p.published,
-      content: content
     });
   }
 

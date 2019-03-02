@@ -14,36 +14,36 @@ class ArchiveCache {
     this.key = key;
   }
 
-  async addDate(blogId: string, date: Date): Promise<void> {
-    const dateString = format(date, 'YYYY-MM');
+  public async addDate(blogId: string, date: Date): Promise<void> {
+    const dateString = format(date, "YYYY-MM");
 
     await db.updateItem({
       TableName: tableName,
       Key: {
         blogId: { S: blogId },
-        path: { S: this.path }
+        path: { S: this.path },
       },
-      UpdateExpression: 'ADD months :m',
+      UpdateExpression: "ADD months :m",
       ExpressionAttributeValues: {
-        ":m": { SS: [ dateString ] }
-      }
+        ":m": { SS: [ dateString ] },
+      },
     }).promise();
   }
 
-  async getMonths(blogId: string): Promise<string[]> {
+  public async getMonths(blogId: string): Promise<string[]> {
     const result = await db.getItem({
       TableName: tableName,
       Key: {
         blogId: { S: blogId },
-        path: { S: this.path }
-      }
+        path: { S: this.path },
+      },
     }).promise();
 
     if (!result.Item) {
       return [];
     }
 
-    let months = result.Item.months.SS || [];
+    const months = result.Item.months.SS || [];
 
     // most recent months first
     months.sort((a, b) => {
@@ -55,15 +55,15 @@ class ArchiveCache {
     return months;
   }
 
-  async rebuild(blogId: string, posts?: Post[]): Promise<void> {
+  public async rebuild(blogId: string, posts?: Post[]): Promise<void> {
     if (!posts) {
       posts = await Post.all(blogId);
     }
 
-    let months = new Set<string>();
+    const months = new Set<string>();
     for (const p of posts) {
       if (p.published) {
-        months.add(format(p.published, 'YYYY-MM'));
+        months.add(format(p.published, "YYYY-MM"));
       }
     }
 
@@ -72,8 +72,8 @@ class ArchiveCache {
       Item: {
         blogId: { S: blogId },
         path: { S: this.path },
-        months: { SS: Array.from(months) }
-      }
+        months: { SS: Array.from(months) },
+      },
     }).promise();
   }
 
@@ -82,6 +82,6 @@ class ArchiveCache {
   }
 }
 
-export const archive = new ArchiveCache(tableName, 'archive');
+export const archive = new ArchiveCache(tableName, "archive");
 
 import Post from "./post";

@@ -11,15 +11,15 @@ import { errorHandler, formDataParser, honeycomb } from "../middlewares";
 export const create = middy(async (event: any, context: Context) => {
   const { code, me, client_id, redirect_uri } = event.body;
   // TODO this should be discovered from the `me` site
-  const authUrl = 'https://indieauth.com/auth';
+  const authUrl = "https://indieauth.com/auth";
 
   const resp = await fetch(authUrl, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "application/json",
     },
-    body: qs.stringify({ code, me, client_id, redirect_uri })
+    body: qs.stringify({ code, me, client_id, redirect_uri }),
   });
   const body = await resp.json();
   if (!resp.ok) {
@@ -33,8 +33,8 @@ export const create = middy(async (event: any, context: Context) => {
       me: body.me,
       scope: body.scope,
       access_token: token,
-      token_type: 'Bearer'
-    })
+      token_type: "Bearer",
+    }),
   };
 });
 

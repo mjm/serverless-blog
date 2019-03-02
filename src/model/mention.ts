@@ -16,30 +16,18 @@ export interface MentionItemData {
 }
 
 export default class Mention implements MentionData {
-  blogId: string;
-  path: string;
-  postPath: string;
-  item: MentionItemData;
 
-  get publishedDate(): Date | null { return this.getDate('published'); }
+  get publishedDate(): Date | null { return this.getDate("published"); }
 
-  getDate(prop: string): Date | null {
-    if (prop in this.item) {
-      return parse(this.item[prop]);
-    } else {
-      return null;
-    }
-  }
-
-  static make(obj: MentionData): Mention {
+  public static make(obj: MentionData): Mention {
     return Object.create(Mention.prototype, Object.getOwnPropertyDescriptors(obj));
   }
 
-  static is(obj: any): boolean {
-    return typeof obj === 'object' && typeof obj.path === 'string' && obj.path.startsWith('mentions/')
+  public static is(obj: any): boolean {
+    return typeof obj === "object" && typeof obj.path === "string" && obj.path.startsWith("mentions/");
   }
 
-  static async create(post: Post, data: MentionData): Promise<Mention> {
+  public static async create(post: Post, data: MentionData): Promise<Mention> {
     data.blogId = post.blogId;
     data.postPath = post.path;
 
@@ -57,30 +45,21 @@ export default class Mention implements MentionData {
     return mention;
   }
 
-  async save(): Promise<void> {
-    console.log('saving mention:', this);
-
-    await db.put({
-      TableName: tableName,
-      Item: this
-    }).promise();
-  }
-
-  static async forPost(post: Post): Promise<Mention[]> {
+  public static async forPost(post: Post): Promise<Mention[]> {
     const query = this.queryForPost(post);
     const result = await db.query(query).promise();
     const items = result.Items || [];
 
-    console.log('mentions for post consumed capacity', result.ConsumedCapacity);
-    return items.map(i => Mention.make(i as MentionData));
+    console.log("mentions for post consumed capacity", result.ConsumedCapacity);
+    return items.map((i) => Mention.make(i as MentionData));
   }
 
-  static async countForPost(post: Post): Promise<number> {
-    let query = this.queryForPost(post);
-    query.Select = 'COUNT';
+  public static async countForPost(post: Post): Promise<number> {
+    const query = this.queryForPost(post);
+    query.Select = "COUNT";
     const result = await db.query(query).promise();
 
-    console.log('counting mentions for post consumed capacity', result.ConsumedCapacity);
+    console.log("counting mentions for post consumed capacity", result.ConsumedCapacity);
     return result.Count || 0;
   }
 
@@ -88,17 +67,38 @@ export default class Mention implements MentionData {
     const queryPath = `mentions/${post.shortPath}`;
     return {
       TableName: tableName,
+      ReturnConsumedCapacity: "TOTAL",
       KeyConditionExpression: "blogId = :b and begins_with(#p, :post)",
       ExpressionAttributeNames: { "#p": "path" },
       ExpressionAttributeValues: {
         ":b": post.blogId,
-        ":post": queryPath
+        ":post": queryPath,
       },
-      ReturnConsumedCapacity: "TOTAL"
     };
   }
+  public blogId: string;
+  public path: string;
+  public postPath: string;
+  public item: MentionItemData;
 
-  async getPost(): Promise<Post> {
+  public getDate(prop: string): Date | null {
+    if (prop in this.item) {
+      return parse(this.item[prop]);
+    } else {
+      return null;
+    }
+  }
+
+  public async save(): Promise<void> {
+    console.log("saving mention:", this);
+
+    await db.put({
+      TableName: tableName,
+      Item: this,
+    }).promise();
+  }
+
+  public async getPost(): Promise<Post> {
     return await Post.get(this.blogId, this.postPath);
   }
 }

@@ -11,8 +11,8 @@ export const handle = middy(async (event: any, context: Context) => {
   const data = await mf.parse(url);
 
   return {
+    body: JSON.stringify(data),
     statusCode: 200,
-    body: JSON.stringify(data)
   };
 });
 
