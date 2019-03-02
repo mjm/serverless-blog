@@ -1,6 +1,9 @@
-workflow "Run tests on push" {
+workflow "Deploy on push" {
   on = "push"
-  resolves = ["Deploy to production"]
+  resolves = [
+    "Deploy to production",
+    "Mark in Honeycomb"
+  ]
 }
 
 action "Install dependencies" {
@@ -21,5 +24,15 @@ action "Deploy to production" {
   secrets = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "HONEYCOMB_WRITE_KEY", "JWT_SECRET"]
   env = {
     AWS_DEFAULT_REGION = "us-east-1"
+  }
+}
+
+action "Mark in Honeycomb" {
+  uses = "./actions/honeymarker"
+  needs = ["Deploy to production"]
+  secrets = ["HONEYCOMB_WRITE_KEY"]
+  env = {
+    HONEYCOMB_DATASET = "serverless-blog"
+    HONEYCOMB_MARKER_TYPE = "deploy"
   }
 }
