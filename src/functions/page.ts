@@ -46,7 +46,12 @@ export const update = middy(async (event: any, context: Context) => {
   let path = decodeURIComponent(event.pathParameters.path);
   beeline.addContext({ "page.query_path": path });
 
-  let page = await Page.get(event.blogId, path);
+  let page;
+  try {
+    page = await Page.get(event.blogId, path);
+  } catch (e) {
+    page = null;
+  }
 
   if (page) {
     beeline.addContext({
